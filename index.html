@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<meta charset="utf-8">
+<title>Unsere Betreuungswoche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one column — status first, people as chips, a Mo–Fr week grid with a coverage strip per day, details below. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #1b2430;
+  --muted: #5b6676;
+  --line: #e1e6ec;
+  --accent: #1d6a72;
+  --accent-ink: #ffffff;
+  --ok: #2e9a5a;
+  --ok-soft: #e3f4ea;
+  --gap: #d44a3c;
+  --gap-soft: rgba(212, 74, 60, .12);
+  --warn: #b97a0d;
+  --warn-soft: #fbf0d9;
+  --p0: #e0714f; --p1: #3a78d4; --p2: #8460cc; --p3: #229386; --p4: #d99a12; --p5: #c24f93;
+  --on-p: #ffffff;
+  --shadow: 0 1px 2px rgba(20, 30, 45, .06), 0 6px 24px rgba(20, 30, 45, .06);
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --hour: 48px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171d; --surface: #1a2129; --ink: #e8edf2; --muted: #9aa6b4; --line: #2b3540;
+    --accent: #5cc2c9; --accent-ink: #0d1a1c;
+    --ok: #4cc683; --ok-soft: rgba(76, 198, 131, .14);
+    --gap: #ff7b6b; --gap-soft: rgba(255, 123, 107, .14);
+    --warn: #f0b54a; --warn-soft: rgba(240, 181, 74, .14);
+    --p0: #f08e6e; --p1: #6c9cf0; --p2: #a68ae6; --p3: #45bfae; --p4: #eab43e; --p5: #e07ab5;
+    --on-p: #111820;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --ink: #e8edf2; --muted: #9aa6b4; --line: #2b3540;
+  --accent: #5cc2c9; --accent-ink: #0d1a1c;
+  --ok: #4cc683; --ok-soft: rgba(76, 198, 131, .14);
+  --gap: #ff7b6b; --gap-soft: rgba(255, 123, 107, .14);
+  --warn: #f0b54a; --warn-soft: rgba(240, 181, 74, .14);
+  --p0: #f08e6e; --p1: #6c9cf0; --p2: #a68ae6; --p3: #45bfae; --p4: #eab43e; --p5: #e07ab5;
+  --on-p: #111820;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+h1 { font-size: clamp(26px, 4vw, 36px); line-height: 1.1; }
+h2 { font-size: 18px; }
+h3 { font-size: 20px; }
+.eyebrow { margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.hint { margin: 0; color: var(--muted); font-size: 13.5px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; font-weight: 600; font-size: 14px; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--gap); }
+.btn.ghost { border-color: transparent; background: transparent; }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 16px; border-radius: 12px; background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+.banner p { margin: 0; flex: 1 1 260px; min-width: 0; }
+.banner .actions { gap: 6px; }
+
+.status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; font-weight: 600; font-size: 14px; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.gap { background: var(--gap-soft); color: var(--gap); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: flex; align-items: stretch; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.chip.active { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
+.chip-main { display: flex; align-items: center; gap: 10px; padding: 8px 6px 8px 12px; border: 0; background: none; text-align: left; }
+.dot { width: 14px; height: 14px; border-radius: 4px; background: var(--c); flex: none; }
+.chip.eltern .dot { background: repeating-linear-gradient(135deg, var(--c) 0 3px, color-mix(in srgb, var(--c) 45%, var(--surface)) 3px 6px); }
+.chip-name { font-weight: 600; display: block; line-height: 1.2; }
+.chip-sub { font-size: 12.5px; color: var(--muted); display: block; font-variant-numeric: tabular-nums; }
+.chip-sub .ok { color: var(--ok); font-weight: 600; }
+.chip-sub .warn { color: var(--warn); font-weight: 600; }
+.chip-edit { border: 0; background: none; padding: 0 10px; color: var(--muted); display: grid; place-items: center; }
+.chip-edit:hover { color: var(--ink); }
+.chip-add { border: 1.5px dashed var(--line); border-radius: 12px; background: transparent; padding: 8px 14px; font-weight: 600; color: var(--muted); }
+.chip-add:hover { color: var(--ink); border-color: var(--muted); }
+
+.calendar { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 12px 12px; }
+.cal-scroll { overflow-x: auto; }
+.cal { display: grid; grid-template-columns: 44px repeat(5, minmax(140px, 1fr)); column-gap: 6px; min-width: 0; }
+.dayhead { font-family: var(--font-display); font-weight: 600; font-size: 15px; padding: 0 4px 8px 12px; display: flex; align-items: center; gap: 8px; }
+.dayhead .dd { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.dayhead .dd.no { background: var(--gap); }
+.times { position: relative; height: calc(11 * var(--hour)); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.times span { position: absolute; right: 6px; transform: translateY(-50%); }
+.times span:first-child { transform: none; }
+.times span:last-child { transform: translateY(-100%); }
+.daybody { position: relative; height: calc(11 * var(--hour)); border-radius: 8px; background-color: color-mix(in srgb, var(--bg) 55%, var(--surface)); background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--hour)); user-select: none; -webkit-user-select: none; cursor: crosshair; }
+.gapband { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, var(--gap-soft) 0 6px, transparent 6px 12px); border-top: 1px dashed var(--gap); border-bottom: 1px dashed var(--gap); pointer-events: none; }
+.strip { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; border-radius: 8px 0 0 8px; overflow: hidden; }
+.strip i { position: absolute; left: 0; right: 0; background: var(--ok); }
+.strip i.no { background: var(--gap); }
+.lanes { position: absolute; left: 10px; right: 3px; top: 0; bottom: 0; }
+.lanebg { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--c) 9%, transparent); border-radius: 4px; pointer-events: none; }
+.blk { position: absolute; border-radius: 6px; background: var(--c); color: var(--on-p); font-size: 11.5px; line-height: 1.25; padding: 3px 4px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; gap: 1px; border: 0; text-align: left; font-variant-numeric: tabular-nums; }
+.blk.eltern { background: repeating-linear-gradient(135deg, var(--c) 0 7px, color-mix(in srgb, var(--c) 72%, var(--surface)) 7px 14px); }
+.blk:hover { filter: brightness(1.06); box-shadow: 0 0 0 2px var(--ink); }
+.blk .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk .tm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .92; }
+.blk .bp { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk .bp.bot { margin-top: auto; }
+.blk .bp.miss { opacity: .75; font-style: italic; }
+.blk.preview { opacity: .6; outline: 2px dashed var(--ink); pointer-events: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; padding-left: 4px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.sw { width: 18px; height: 12px; border-radius: 3px; display: inline-block; }
+.sw.work { background: repeating-linear-gradient(135deg, var(--muted) 0 3px, transparent 3px 6px); border: 1px solid var(--muted); }
+.sw.care { background: var(--muted); }
+.sw.gap { background: repeating-linear-gradient(135deg, var(--gap-soft) 0 3px, transparent 3px 6px); border: 1px dashed var(--gap); }
+
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); min-width: 0; }
+.card h2 { margin-bottom: 8px; }
+.card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.card li { display: flex; gap: 10px; align-items: baseline; font-variant-numeric: tabular-nums; }
+.card li b { min-width: 28px; }
+.card li .m { width: 8px; height: 8px; border-radius: 50%; flex: none; transform: translateY(-1px); }
+.m.gap { background: var(--gap); } .m.warn { background: var(--warn); } .m.ok { background: var(--ok); }
+.card .empty { color: var(--muted); margin: 0; }
+
+dialog { border: 0; border-radius: 16px; padding: 0; width: min(440px, calc(100vw - 32px)); background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .3); }
+dialog::backdrop { background: rgba(15, 22, 30, .45); }
+.dlg { padding: 20px 20px 16px; display: flex; flex-direction: column; gap: 14px; }
+.dlg .sub { margin: -8px 0 0; color: var(--muted); font-size: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; font-size: 13.5px; font-weight: 600; min-width: 0; }
+.field input, .field select, .field textarea { font-weight: 400; font-size: 15px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); width: 100%; min-width: 0; }
+.field textarea { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; resize: vertical; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label { position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: block; padding: 7px 12px; border: 1px solid var(--line); border-radius: 9px; font-weight: 500; font-size: 14px; }
+.seg input:checked + span { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.colors { display: flex; gap: 8px; }
+.colors label { position: relative; }
+.colors input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.colors span { display: block; width: 28px; height: 28px; border-radius: 8px; background: var(--c); }
+.colors input:checked + span { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+.helptext { margin: 0; font-size: 13.5px; color: var(--muted); background: var(--bg); border-radius: 9px; padding: 9px 11px; }
+.dlg-foot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; padding-top: 4px; }
+.dlg-foot .spacer { flex: 1; }
+.linkbox { display: flex; gap: 8px; }
+.linkbox input { flex: 1; min-width: 0; font-size: 13px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); }
+details summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+details[open] summary { margin-bottom: 8px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; font-size: 14px; z-index: 50; max-width: calc(100vw - 32px); }
+@media (max-width: 560px) {
+  .actions .btn { flex: 1; }
+  .actions { width: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chip, .blk, .btn { transition: box-shadow .15s, border-color .15s, filter .15s; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Montag bis Freitag · 7 bis 18 Uhr</p>
+      <h1>Unsere Betreuungswoche</h1>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="addBtn">Zeiten eintragen</button>
+      <button type="button" class="btn primary" id="shareBtn">Plan teilen</button>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+  <section class="status" id="status" aria-live="polite"></section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Wer betreut?</h2>
+      <p class="hint" id="drawHint">Person auswählen, dann im Kalender eine Zeit ziehen. Oder „Zeiten eintragen“ nutzen.</p>
+    </div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section class="calendar">
+    <div class="cal-scroll"><div class="cal" id="cal"></div></div>
+    <div class="legend">
+      <span><i class="sw work"></i>Elternteil arbeitet</span>
+      <span><i class="sw care"></i>betreut / Kita offen</span>
+      <span><i class="sw gap"></i>Lücke: niemand da</span>
+    </div>
+  </section>
+
+  <section class="summary" id="summary"></section>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<div class="toast" id="toast" hidden></div>
+<datalist id="names"></datalist>
+
+<script>
+(() => {
+  // Öffentliche Adresse dieser Seite; Teilen-Links bauen darauf auf.
+  const SHARE_BASE = '';
+  const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+  const DAYL = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+  const START = 7 * 60, END = 18 * 60, STEP = 15;
+  const TYPES = { eltern: 'Elternteil', betreuung: 'Betreuung', kita: 'Kindergarten' };
+  const KEY = 'betreuungswoche.v1';
+  const $ = s => document.querySelector(s);
+
+  let state, shared = null, active = null, drag = null, lastPointer = 'mouse';
+
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = m => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+  const toInput = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  const parseT = v => { const [h, mm] = (v || '0:0').split(':').map(Number); return h * 60 + (mm || 0); };
+  const snap = m => Math.min(END, Math.max(START, Math.round(m / STEP) * STEP));
+  const fmtH = x => x.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+  const hourPx = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hour')) || 48;
+  const byName = n => state.people.find(p => p.name.trim().toLowerCase() === String(n || '').trim().toLowerCase());
+
+  // ---------- Beispiel ----------
+  function example() {
+    const wk = (days, s, e, extra = {}) => days.map(d => ({ d, s, e, ...extra }));
+    return {
+      example: true,
+      people: [
+        { id: uid(), name: 'Kindergarten', type: 'kita', color: 3, blocks: wk([0, 1, 2, 3, 4], 510, 720, { bring: '', pick: '' }) }
+      ]
+    };
+  }
+
+  // ---------- Speichern ----------
+  function loadOwn() { try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } }
+  function save() {
+    if (shared) return;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+  }
+  function changed() {
+    if (state.example) { state.example = false; }
+    state.people.forEach(normalize);
+    save(); render();
+  }
+
+  function normalize(p) {
+    const bl = p.blocks
+      .map(b => ({ ...b, s: snap(b.s), e: snap(b.e) }))
+      .filter(b => b.e > b.s)
+      .sort((a, b) => a.d - b.d || a.s - b.s);
+    const out = [];
+    for (const b of bl) {
+      const last = out[out.length - 1];
+      if (last && last.d === b.d && b.s <= last.e) {
+        if (b.e > last.e) { last.e = b.e; if (p.type === 'kita') last.pick = b.pick || last.pick; }
+      } else out.push({ ...b });
+    }
+    p.blocks = out;
+  }
+
+  // ---------- Berechnung ----------
+  const overlaps = (b, d, s, e) => b.d === d && b.s < e && b.e > s;
+  function coverage() {
+    const n = (END - START) / STEP;
+    return DAYS.map((_, d) => {
+      const arr = [];
+      for (let i = 0; i < n; i++) {
+        const t = START + i * STEP, t2 = t + STEP;
+        arr.push(state.people.some(p => p.type === 'eltern'
+          ? !p.blocks.some(b => overlaps(b, d, t, t2))
+          : p.blocks.some(b => overlaps(b, d, t, t2))));
+      }
+      return arr;
+    });
+  }
+  function runs(arr, val) {
+    const out = []; let st = null;
+    arr.forEach((v, i) => {
+      if (v === val && st === null) st = i;
+      if (v !== val && st !== null) { out.push([START + st * STEP, START + i * STEP]); st = null; }
+    });
+    if (st !== null) out.push([START + st * STEP, END]);
+    return out;
+  }
+  function hoursOf(p) { return p.blocks.reduce((a, b) => a + (b.e - b.s), 0) / 60; }
+
+  function checkPerson(name, d, t, what) {
+    if (!String(name || '').trim()) return `${DAYS[d]} ${fmt(t)}: Wer ${what === 'bring' ? 'bringt' : 'holt ab'}? Noch kein Name eingetragen.`;
+    const p = byName(name);
+    if (!p) return null;
+    const verb = what === 'bring' ? 'Bringen' : 'Abholen';
+    if (p.type === 'eltern' && p.blocks.some(b => b.d === d && b.s < t && b.e > t))
+      return `${DAYS[d]} ${fmt(t)}: ${verb} durch ${p.name}, aber ${p.name} arbeitet da noch.`;
+    if (p.type === 'betreuung' && !p.blocks.some(b => b.d === d && b.s <= t && b.e >= t))
+      return `${DAYS[d]} ${fmt(t)}: ${verb} durch ${p.name}, aber ${p.name} ist da nicht eingeplant.`;
+    return null;
+  }
+  function analyse() {
+    const cov = coverage();
+    const gaps = [];
+    cov.forEach((arr, d) => runs(arr, false).forEach(([s, e]) => gaps.push({ d, s, e })));
+    const warns = [];
+    state.people.filter(p => p.type === 'kita').forEach(k => k.blocks.forEach(b => {
+      const w1 = checkPerson(b.bring, b.d, b.s, 'bring'); if (w1) warns.push(w1);
+      const w2 = checkPerson(b.pick, b.d, b.e, 'pick'); if (w2) warns.push(w2);
+    }));
+    const hours = state.people.filter(p => p.type === 'eltern' && p.hours > 0).map(p => ({ p, ist: hoursOf(p) }));
+    return { cov, gaps, warns, hours };
+  }
+
+  // ---------- Darstellung ----------
+  function render() {
+    const a = analyse();
+    renderBanner();
+    renderStatus(a);
+    renderChips();
+    renderCal(a);
+    renderSummary(a);
+    $('#names').innerHTML = state.people.filter(p => p.type !== 'kita').map(p => `<option value="${esc(p.name)}">`).join('');
+  }
+
+  function renderBanner() {
+    const el = $('#banner');
+    if (shared) {
+      el.hidden = false;
+      el.innerHTML = `<p><b>Du siehst einen geteilten Plan.</b> Änderungen werden erst gespeichert, wenn du ihn übernimmst.</p>
+        <div class="actions"><button type="button" class="btn primary" data-act="adopt">Als meinen Plan übernehmen</button>
+        <button type="button" class="btn" data-act="mine">Meinen Plan anzeigen</button></div>`;
+    } else if (state.example) {
+      el.hidden = false;
+      el.innerHTML = `<p><b>Startplan: Kindergarten Mo–Fr 8:30–12:00.</b> Füge Eltern, Großeltern usw. hinzu oder fang mit einem leeren Plan an.</p>
+        <div class="actions"><button type="button" class="btn" data-act="clear">Leeren Plan starten</button></div>`;
+    } else el.hidden = true;
+  }
+
+  function renderStatus(a) {
+    const parts = [];
+    if (!state.people.length) parts.push(`<span class="pill warn">Noch niemand eingetragen</span>`);
+    else if (!a.gaps.length) parts.push(`<span class="pill ok">Alle Zeiten abgedeckt</span>`);
+    else {
+      const mins = a.gaps.reduce((s, g) => s + g.e - g.s, 0);
+      parts.push(`<span class="pill gap">${a.gaps.length} ${a.gaps.length === 1 ? 'Lücke' : 'Lücken'} · ${fmtH(mins / 60)} h ohne Betreuung</span>`);
+    }
+    if (a.warns.length) parts.push(`<span class="pill warn">${a.warns.length} ${a.warns.length === 1 ? 'Hinweis' : 'Hinweise'} zum Bringen/Abholen</span>`);
+    const off = a.hours.filter(h => Math.abs(h.ist - h.p.hours) > .01);
+    if (off.length) parts.push(`<span class="pill warn">Arbeitszeit unvollständig: ${off.map(h => esc(h.p.name)).join(', ')}</span>`);
+    $('#status').innerHTML = parts.join('');
+  }
+
+  const pencil = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+  function renderChips() {
+    const html = state.people.map(p => {
+      let sub = TYPES[p.type];
+      if (p.type === 'eltern') {
+        const ist = hoursOf(p);
+        if (p.hours > 0) {
+          const ok = Math.abs(ist - p.hours) < .01;
+          sub += ` · <span class="${ok ? 'ok' : 'warn'}">${fmtH(ist)} / ${fmtH(p.hours)} h</span>`;
+        } else sub += ` · ${fmtH(ist)} h Arbeit`;
+      }
+      return `<div class="chip ${p.type} ${active === p.id ? 'active' : ''}" style="--c:var(--p${p.color})">
+        <button type="button" class="chip-main" data-sel="${p.id}" aria-pressed="${active === p.id}">
+          <span class="dot"></span><span><span class="chip-name">${esc(p.name)}</span><span class="chip-sub">${sub}</span></span>
+        </button>
+        <button type="button" class="chip-edit" data-edit="${p.id}" aria-label="${esc(p.name)} bearbeiten">${pencil}</button>
+      </div>`;
+    }).join('');
+    $('#chips').innerHTML = html + `<button type="button" class="chip-add" id="addPerson">+ Person hinzufügen</button>`;
+    const ap = state.people.find(p => p.id === active);
+    $('#drawHint').textContent = ap
+      ? (ap.type === 'eltern' ? `Ziehe im Kalender, wann ${ap.name} arbeitet.` : ap.type === 'kita' ? `Ziehe im Kalender die Öffnungszeit von ${ap.name}.` : `Ziehe im Kalender, wann ${ap.name} betreut.`)
+      : 'Person auswählen, dann im Kalender eine Zeit ziehen. Oder „Zeiten eintragen“ nutzen.';
+  }
+
+  function renderCal(a) {
+    const H = hourPx(), px = m => (m - START) / 60 * H;
+    const n = Math.max(1, state.people.length);
+    let h = `<div></div>` + DAYL.map((name, d) => {
+      const bad = a.gaps.some(g => g.d === d);
+      return `<div class="dayhead"><span class="dd ${bad ? 'no' : ''}" title="${bad ? 'Lücke' : 'abgedeckt'}"></span>${name}</div>`;
+    }).join('');
+    let times = '';
+    for (let t = 7; t <= 18; t++) times += `<span style="top:${(t - 7) * H}px">${t}:00</span>`;
+    h += `<div class="times">${times}</div>`;
+    DAYS.forEach((_, d) => {
+      let body = '';
+      a.gaps.filter(g => g.d === d).forEach(g => body += `<div class="gapband" style="top:${px(g.s)}px;height:${px(g.e) - px(g.s)}px"></div>`);
+      body += `<div class="strip">` + runs(a.cov[d], true).map(([s, e]) => `<i style="top:${px(s)}px;height:${px(e) - px(s)}px"></i>`).join('')
+        + runs(a.cov[d], false).map(([s, e]) => `<i class="no" style="top:${px(s)}px;height:${px(e) - px(s)}px"></i>`).join('') + `</div>`;
+      let lanes = '';
+      state.people.forEach((p, li) => {
+        const pos = `left:calc(${li} * 100% / ${n});width:calc(100% / ${n} - 3px)`;
+        if (p.id === active) lanes += `<div class="lanebg" style="--c:var(--p${p.color});${pos}"></div>`;
+        p.blocks.forEach((b, i) => {
+          if (b.d !== d) return;
+          const hgt = px(b.e) - px(b.s);
+          const time = `${fmt(b.s)}–${fmt(b.e)}`;
+          let inner;
+          if (p.type === 'kita') {
+            inner = `<span class="bp ${b.bring ? '' : 'miss'}">↓ ${esc(b.bring || 'wer bringt?')}</span>`
+              + (hgt > 56 ? `<span class="tm">${time}</span>` : '')
+              + `<span class="bp bot ${b.pick ? '' : 'miss'}">↑ ${esc(b.pick || 'wer holt ab?')}</span>`;
+          } else {
+            inner = `<span class="nm">${esc(p.name)}</span>` + (hgt > 34 ? `<span class="tm">${time}</span>` : '');
+          }
+          const label = `${p.name}, ${DAYL[d]} ${time}` + (p.type === 'eltern' ? ' (arbeitet)' : '') + (p.type === 'kita' ? `, bringt: ${b.bring || 'offen'}, holt ab: ${b.pick || 'offen'}` : '');
+          lanes += `<button type="button" class="blk ${p.type}" data-p="${p.id}" data-i="${i}" title="${esc(label)}" aria-label="${esc(label)}"
+            style="--c:var(--p${p.color});${pos};top:${px(b.s)}px;height:${hgt}px">${inner}</button>`;
+        });
+      });
+      body += `<div class="lanes">${lanes}</div>`;
+      h += `<div class="daybody" data-d="${d}">${body}</div>`;
+    });
+    $('#cal').innerHTML = h;
+  }
+
+  function renderSummary(a) {
+    const gaps = a.gaps.length
+      ? `<ul>${a.gaps.map(g => `<li><span class="m gap"></span><b>${DAYS[g.d]}</b><span>${fmt(g.s)}–${fmt(g.e)} Uhr niemand da</span></li>`).join('')}</ul>`
+      : `<p class="empty">${state.people.length ? 'Keine Lücken. Mo bis Fr ist von 7 bis 18 Uhr immer jemand da.' : 'Füge Personen hinzu, um die Abdeckung zu sehen.'}</p>`;
+    const warns = a.warns.length
+      ? `<ul>${a.warns.map(w => `<li><span class="m warn"></span><span>${esc(w)}</span></li>`).join('')}</ul>`
+      : `<p class="empty">Bringen und Abholen passt zu den eingetragenen Zeiten.</p>`;
+    const hrs = a.hours.length
+      ? `<ul>${a.hours.map(({ p, ist }) => { const ok = Math.abs(ist - p.hours) < .01; return `<li><span class="m ${ok ? 'ok' : 'warn'}"></span><span><b>${esc(p.name)}</b>: ${fmtH(ist)} von ${fmtH(p.hours)} h eingetragen${ok ? '' : ist < p.hours ? ` (es fehlen ${fmtH(p.hours - ist)} h)` : ` (${fmtH(ist - p.hours)} h zu viel)`}</span></li>`; }).join('')}</ul>`
+      : `<p class="empty">Bei Elternteilen kannst du die Wochenstunden angeben.</p>`;
+    $('#summary').innerHTML = `<div class="card"><h2>Lücken</h2>${gaps}</div><div class="card"><h2>Bringen &amp; Abholen</h2>${warns}</div><div class="card"><h2>Arbeitszeiten</h2>${hrs}</div>`;
+  }
+
+  // ---------- Dialoge ----------
+  const dlg = $('#dlg'), body = $('#dlgBody');
+  function openDlg(html, wire) {
+    body.innerHTML = html;
+    wire(body);
+    if (!dlg.open) dlg.showModal();
+    const first = body.querySelector('input:not([type=radio]):not([type=checkbox]), select');
+    if (first) first.focus();
+  }
+  const close = () => dlg.close();
+  dlg.addEventListener('click', e => { if (e.target === dlg) close(); });
+
+  function twoStep(btn, label, fn) {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.armed) return fn();
+      btn.dataset.armed = '1'; btn.textContent = label;
+    });
+  }
+
+  function personDlg(p) {
+    const isNew = !p;
+    p = p || { name: '', type: 'eltern', hours: 30, color: state.people.length % 6 };
+    const help = {
+      eltern: 'Trage ein, wann diese Person arbeitet. Außerhalb davon gilt sie als verfügbar.',
+      betreuung: 'Zum Beispiel Großeltern oder Babysitter. Trage ein, wann die Person das Kind betreut.',
+      kita: 'Trage die Betreuungszeiten ein und wer das Kind bringt und abholt.'
+    };
+    openDlg(`
+      <h3>${isNew ? 'Person hinzufügen' : esc(p.name) + ' bearbeiten'}</h3>
+      <label class="field">Name<input id="f-name" value="${esc(p.name)}" placeholder="z. B. Mama, Opa, Kita Sonnenschein" autocomplete="off"></label>
+      <div class="field">Rolle<div class="seg">${Object.entries(TYPES).map(([k, v]) => `<label><input type="radio" name="f-type" value="${k}" ${p.type === k ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div></div>
+      <p class="helptext" id="f-help"></p>
+      <label class="field" id="f-hours-wrap">Arbeitsstunden pro Woche<input id="f-hours" type="number" min="0" max="60" step="0.5" value="${p.hours || ''}" placeholder="z. B. 30"></label>
+      <div class="field">Farbe<div class="colors">${[0, 1, 2, 3, 4, 5].map(c => `<label style="--c:var(--p${c})"><input type="radio" name="f-color" value="${c}" ${p.color === c ? 'checked' : ''} aria-label="Farbe ${c + 1}"><span></span></label>`).join('')}</div></div>
+      <div class="dlg-foot">${isNew ? '' : '<button type="button" class="btn danger" id="f-del">Löschen</button>'}<span class="spacer"></span>
+        <button type="button" class="btn" id="f-cancel">Abbrechen</button><button type="button" class="btn primary" id="f-save">${isNew ? 'Hinzufügen' : 'Speichern'}</button></div>`,
+      b => {
+        const sync = () => {
+          const t = b.querySelector('[name=f-type]:checked').value;
+          b.querySelector('#f-help').textContent = help[t];
+          b.querySelector('#f-hours-wrap').hidden = t !== 'eltern';
+        };
+        b.querySelectorAll('[name=f-type]').forEach(r => r.addEventListener('change', sync)); sync();
+        b.querySelector('#f-cancel').onclick = close;
+        if (!isNew) twoStep(b.querySelector('#f-del'), 'Wirklich löschen?', () => {
+          state.people = state.people.filter(x => x.id !== p.id);
+          if (active === p.id) active = null;
+          close(); changed();
+        });
+        const doSave = () => {
+          const name = b.querySelector('#f-name').value.trim();
+          if (!name) { b.querySelector('#f-name').focus(); toast('Bitte einen Namen eingeben.'); return; }
+          const type = b.querySelector('[name=f-type]:checked').value;
+          const hours = parseFloat(b.querySelector('#f-hours').value) || 0;
+          const color = +b.querySelector('[name=f-color]:checked').value;
+          if (isNew) {
+            const np = { id: uid(), name, type, hours: type === 'eltern' ? hours : 0, color, blocks: [] };
+            state.people.push(np); active = np.id;
+          } else {
+            if (p.name !== name) state.people.forEach(k => k.type === 'kita' && k.blocks.forEach(bl => {
+              if (bl.bring === p.name) bl.bring = name; if (bl.pick === p.name) bl.pick = name;
+            }));
+            Object.assign(p, { name, type, hours: type === 'eltern' ? hours : 0, color });
+          }
+          close(); changed();
+          if (isNew) toast(`${name} hinzugefügt. Jetzt Zeiten eintragen.`);
+        };
+        b.querySelector('#f-save').onclick = doSave;
+        b.querySelector('#f-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSave(); } });
+      });
+  }
+
+  const kitaFields = (b = {}) => `<div class="row" id="f-kita">
+      <label class="field">Bringt (Name)<input id="f-bring" list="names" value="${esc(b.bring || '')}" placeholder="z. B. Papa" autocomplete="off"></label>
+      <label class="field">Holt ab (Name)<input id="f-pick" list="names" value="${esc(b.pick || '')}" placeholder="z. B. Oma" autocomplete="off"></label></div>`;
+  const timeFields = (s, e) => `<div class="row">
+      <label class="field">Von<input id="f-s" type="time" min="07:00" max="18:00" step="900" value="${toInput(s)}"></label>
+      <label class="field">Bis<input id="f-e" type="time" min="07:00" max="18:00" step="900" value="${toInput(e)}"></label></div>`;
+  function readTimes(b) {
+    let s = snap(parseT(b.querySelector('#f-s').value)), e = snap(parseT(b.querySelector('#f-e').value));
+    if (e <= s) { toast('„Bis“ muss nach „Von“ liegen (zwischen 7 und 18 Uhr).'); return null; }
+    return [s, e];
+  }
+
+  function addDlg(pre = {}) {
+    if (!state.people.length) { personDlg(); return; }
+    const pid = pre.pid || active || state.people[0].id;
+    const days = pre.d != null ? [pre.d] : [0, 1, 2, 3, 4];
+    const s = pre.s ?? 480, e = pre.e ?? Math.min(END, s + 240);
+    openDlg(`
+      <h3>Zeiten eintragen</h3>
+      <label class="field">Für wen?<select id="f-p">${state.people.map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${esc(p.name)} (${TYPES[p.type]})</option>`).join('')}</select></label>
+      <p class="helptext" id="f-help"></p>
+      <div class="field">An welchen Tagen?<div class="seg">${DAYS.map((d, i) => `<label><input type="checkbox" name="f-d" value="${i}" ${days.includes(i) ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></div>
+      ${timeFields(s, e)}
+      ${kitaFields()}
+      <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="f-cancel">Abbrechen</button><button type="button" class="btn primary" id="f-save">Eintragen</button></div>`,
+      b => {
+        const sync = () => {
+          const p = state.people.find(x => x.id === b.querySelector('#f-p').value);
+          b.querySelector('#f-kita').hidden = p.type !== 'kita';
+          b.querySelector('#f-help').textContent = p.type === 'eltern' ? `Arbeitszeit von ${p.name}.` : p.type === 'kita' ? `Betreuungszeit im ${p.name}, mit Namen fürs Bringen und Abholen.` : `Wann ${p.name} das Kind betreut.`;
+        };
+        b.querySelector('#f-p').onchange = sync; sync();
+        b.querySelector('#f-cancel').onclick = close;
+        b.querySelector('#f-save').onclick = () => {
+          const p = state.people.find(x => x.id === b.querySelector('#f-p').value);
+          const ds = [...b.querySelectorAll('[name=f-d]:checked')].map(x => +x.value);
+          if (!ds.length) { toast('Bitte mindestens einen Tag wählen.'); return; }
+          const t = readTimes(b); if (!t) return;
+          const extra = p.type === 'kita' ? { bring: b.querySelector('#f-bring').value.trim(), pick: b.querySelector('#f-pick').value.trim() } : {};
+          if (p.type === 'kita') p.blocks = p.blocks.filter(x => !ds.includes(x.d) || !overlaps(x, x.d, t[0], t[1]));
+          ds.forEach(d => p.blocks.push({ d, s: t[0], e: t[1], ...extra }));
+          active = p.id;
+          close(); changed();
+        };
+      });
+  }
+
+  function blockDlg(p, i) {
+    const bl = p.blocks[i];
+    openDlg(`
+      <h3>${esc(p.name)}</h3>
+      <p class="sub">${DAYL[bl.d]} · ${p.type === 'eltern' ? 'Arbeitszeit' : p.type === 'kita' ? 'Betreuungszeit' : 'Betreut das Kind'}</p>
+      ${timeFields(bl.s, bl.e)}
+      ${p.type === 'kita' ? kitaFields(bl) : ''}
+      <div class="dlg-foot"><button type="button" class="btn danger" id="f-del">Löschen</button><span class="spacer"></span>
+        <button type="button" class="btn" id="f-cancel">Abbrechen</button><button type="button" class="btn primary" id="f-save">Speichern</button></div>`,
+      b => {
+        b.querySelector('#f-cancel').onclick = close;
+        b.querySelector('#f-del').onclick = () => { p.blocks.splice(i, 1); close(); changed(); };
+        b.querySelector('#f-save').onclick = () => {
+          const t = readTimes(b); if (!t) return;
+          Object.assign(bl, { s: t[0], e: t[1] });
+          if (p.type === 'kita') { bl.bring = b.querySelector('#f-bring').value.trim(); bl.pick = b.querySelector('#f-pick').value.trim(); }
+          close(); changed();
+        };
+      });
+  }
+
+  // ---------- Teilen ----------
+  const B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  function toB62(bytes) {
+    let n = BigInt('0x01' + Array.from(bytes, x => x.toString(16).padStart(2, '0')).join(''));
+    let s = '';
+    while (n > 0n) { s = B62[Number(n % 62n)] + s; n /= 62n; }
+    return s;
+  }
+  function fromB62(s) {
+    let n = 0n;
+    for (const ch of s) { const i = B62.indexOf(ch); if (i < 0) throw new Error('bad'); n = n * 62n + BigInt(i); }
+    let h = n.toString(16); if (h.length % 2) h = '0' + h;
+    const out = new Uint8Array(h.length / 2);
+    for (let i = 0; i < out.length; i++) out[i] = parseInt(h.substr(i * 2, 2), 16);
+    if (out[0] !== 1) throw new Error('bad');
+    return out.slice(1);
+  }
+  async function streamBytes(bytes, T) {
+    return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new T('deflate-raw'))).arrayBuffer());
+  }
+  function pack(st) {
+    return st.people.map(p => [p.name, p.type[0], p.hours || 0, p.color,
+      p.blocks.map(b => { const a = [b.d, (b.s - START) / STEP, (b.e - START) / STEP]; if (p.type === 'kita') a.push(b.bring || '', b.pick || ''); return a; })]);
+  }
+  function unpack(arr) {
+    const T = { e: 'eltern', b: 'betreuung', k: 'kita' };
+    return { people: arr.map(([name, t, hours, color, bl]) => ({
+      id: uid(), name: String(name), type: T[t] || 'betreuung', hours: +hours || 0, color: (+color || 0) % 6,
+      blocks: bl.map(([d, s, e, bring, pick]) => ({ d: +d, s: START + s * STEP, e: START + e * STEP, ...(T[t] === 'kita' ? { bring: bring || '', pick: pick || '' } : {}) }))
+    })) };
+  }
+  async function encodePlan(st) {
+    const raw = new TextEncoder().encode(JSON.stringify(pack(st)));
+    if ('CompressionStream' in window) {
+      try { return 'p1z' + toB62(await streamBytes(raw, CompressionStream)); } catch {}
+    }
+    return 'p1r' + toB62(raw);
+  }
+  async function decodePlan(code) {
+    const m = /^p1([zr])([0-9A-Za-z]+)$/.exec(code.trim().replace(/^.*#/, ''));
+    if (!m) throw new Error('Kein gültiger Plan-Code');
+    let bytes = fromB62(m[2]);
+    if (m[1] === 'z') bytes = await streamBytes(bytes, DecompressionStream);
+    const st = unpack(JSON.parse(new TextDecoder().decode(bytes)));
+    st.people.forEach(normalize);
+    return st;
+  }
+  function baseUrl() { return SHARE_BASE || location.href.split('#')[0]; }
+
+  async function shareDlg() {
+    const code = await encodePlan(state);
+    const link = baseUrl() + '#' + code;
+    openDlg(`
+      <h3>Plan teilen</h3>
+      <p class="sub">Der ganze Plan steckt in diesem Link. Wer ihn öffnet, sieht genau diesen Stand. Nach Änderungen einfach neu teilen.</p>
+      <div class="linkbox"><input id="f-link" readonly value="${esc(link)}" aria-label="Link zum Plan"><button type="button" class="btn primary" id="f-copy">Kopieren</button></div>
+      <details><summary>Link funktioniert nicht? Plan-Code verwenden</summary>
+        <div class="field">Plan-Code zum Weitergeben<div class="linkbox"><input id="f-code" readonly value="${esc(code)}"><button type="button" class="btn" id="f-copy2">Kopieren</button></div></div>
+        <label class="field" style="margin-top:10px">Erhaltenen Plan-Code oder Link einfügen<textarea id="f-in" rows="3" placeholder="p1z…"></textarea></label>
+        <div class="dlg-foot"><button type="button" class="btn" id="f-load">Plan öffnen</button></div>
+      </details>
+      <div class="dlg-foot"><button type="button" class="btn" id="f-cancel">Schließen</button></div>`,
+      b => {
+        const copy = (inp, btn) => {
+          const ok = () => { btn.textContent = 'Kopiert'; toast('In die Zwischenablage kopiert.'); };
+          const fallback = () => { inp.focus(); inp.select(); toast('Text ist markiert. Jetzt kopieren (⌘C / Strg+C).'); };
+          try { navigator.clipboard.writeText(inp.value).then(ok, fallback); } catch { fallback(); }
+        };
+        b.querySelector('#f-copy').onclick = e => copy(b.querySelector('#f-link'), e.currentTarget);
+        b.querySelector('#f-copy2').onclick = e => copy(b.querySelector('#f-code'), e.currentTarget);
+        b.querySelector('#f-link').onfocus = e => e.target.select();
+        b.querySelector('#f-cancel').onclick = close;
+        b.querySelector('#f-load').onclick = async () => {
+          try { openShared(await decodePlan(b.querySelector('#f-in').value)); close(); }
+          catch { toast('Das ist kein gültiger Plan-Code.'); }
+        };
+      });
+  }
+
+  function openShared(st) {
+    const own = loadOwn();
+    if (!own || !own.people || !own.people.length || own.example) {
+      state = st; shared = null; active = null; save(); render();
+      clearHash(); toast('Geteilter Plan geladen.');
+    } else {
+      shared = true; state = st; active = null; render();
+    }
+  }
+  function clearHash() { try { history.replaceState(null, '', location.href.split('#')[0]); } catch {} }
+
+  // ---------- Ereignisse ----------
+  $('#addBtn').onclick = () => addDlg();
+  $('#shareBtn').onclick = () => shareDlg().catch(() => toast('Link konnte nicht erstellt werden.'));
+  $('#banner').addEventListener('click', e => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'adopt') { shared = null; state.example = false; save(); clearHash(); render(); toast('Plan übernommen und gespeichert.'); }
+    if (act === 'mine') { shared = null; state = loadOwn() || example(); clearHash(); render(); }
+    if (act === 'clear') { state = { people: [] }; active = null; save(); render(); personDlg(); }
+  });
+  $('#chips').addEventListener('click', e => {
+    const sel = e.target.closest('[data-sel]'), ed = e.target.closest('[data-edit]');
+    if (sel) { active = active === sel.dataset.sel ? null : sel.dataset.sel; render(); }
+    else if (ed) personDlg(state.people.find(p => p.id === ed.dataset.edit));
+    else if (e.target.closest('#addPerson')) personDlg();
+  });
+
+  const cal = $('#cal');
+  const minuteAt = (bodyEl, y) => snap(START + (y - bodyEl.getBoundingClientRect().top) / hourPx() * 60);
+  cal.addEventListener('pointerdown', e => {
+    lastPointer = e.pointerType;
+    if (e.pointerType === 'touch' || e.button !== 0) return;
+    const bodyEl = e.target.closest('.daybody');
+    if (!bodyEl || e.target.closest('.blk')) return;
+    const p = state.people.find(x => x.id === active);
+    if (!p) { addDlg({ d: +bodyEl.dataset.d, s: minuteAt(bodyEl, e.clientY) }); return; }
+    e.preventDefault();
+    const m0 = minuteAt(bodyEl, e.clientY);
+    const lanes = bodyEl.querySelector('.lanes');
+    const n = Math.max(1, state.people.length), li = state.people.indexOf(p);
+    const pv = document.createElement('div');
+    pv.className = 'blk preview ' + p.type;
+    pv.style.cssText = `--c:var(--p${p.color});left:calc(${li} * 100% / ${n});width:calc(100% / ${n} - 3px)`;
+    lanes.appendChild(pv);
+    drag = { p, d: +bodyEl.dataset.d, bodyEl, m0, m1: m0, pv };
+    try { bodyEl.setPointerCapture(e.pointerId); } catch {}
+    updPreview();
+  });
+  function updPreview() {
+    const H = hourPx(), s = Math.min(drag.m0, drag.m1), e = Math.max(drag.m0, drag.m1);
+    drag.pv.style.top = (s - START) / 60 * H + 'px';
+    drag.pv.style.height = Math.max(3, (e - s) / 60 * H) + 'px';
+    drag.pv.innerHTML = e > s ? `<span class="tm">${fmt(s)}–${fmt(e)}</span>` : '';
+  }
+  cal.addEventListener('pointermove', e => { if (!drag) return; drag.m1 = minuteAt(drag.bodyEl, e.clientY); updPreview(); });
+  const endDrag = e => {
+    if (!drag) return;
+    if (e.type === 'pointerup') drag.m1 = minuteAt(drag.bodyEl, e.clientY);
+    const { p, d, m0, m1, pv } = drag; drag = null; pv.remove();
+    const s = Math.min(m0, m1), en = Math.max(m0, m1);
+    if (e.type === 'pointercancel') return;
+    if (en - s < STEP) { addDlg({ pid: p.id, d, s, e: Math.min(END, s + 60) }); return; }
+    if (p.type === 'kita') p.blocks = p.blocks.filter(x => !overlaps(x, d, s, en));
+    const nb = { d, s, e: en };
+    if (p.type === 'kita') { const prev = p.blocks.find(x => x.bring || x.pick); nb.bring = prev?.bring || ''; nb.pick = prev?.pick || ''; }
+    p.blocks.push(nb);
+    changed();
+    if (p.type === 'kita') { const i = p.blocks.findIndex(x => x.d === d && x.s <= s && x.e >= en); if (i >= 0) blockDlg(p, i); }
+  };
+  cal.addEventListener('pointerup', endDrag);
+  cal.addEventListener('pointercancel', endDrag);
+  cal.addEventListener('click', e => {
+    const blk = e.target.closest('.blk');
+    if (blk && blk.dataset.p) { const p = state.people.find(x => x.id === blk.dataset.p); blockDlg(p, +blk.dataset.i); return; }
+    const bodyEl = e.target.closest('.daybody');
+    if (bodyEl && lastPointer === 'touch') addDlg({ pid: active, d: +bodyEl.dataset.d, s: minuteAt(bodyEl, e.clientY) });
+  });
+
+  let tt;
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2600);
+  }
+
+  // ---------- Start ----------
+  state = loadOwn() || example();
+  if (!state.people) state = example();
+  render();
+  const h = location.hash.slice(1);
+  if (/^p1[zr]/.test(h)) decodePlan(h).then(openShared).catch(() => toast('Der geteilte Link ist unvollständig oder beschädigt.'));
+})();
+</script>
+
+</html>
