@@ -126,6 +126,13 @@ button { cursor: pointer; }
 .blk .bp { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .blk .bp.bot { margin-top: auto; }
 .blk .bp.miss { opacity: .75; font-style: italic; }
+.hdl { position: absolute; left: 0; right: 0; height: 9px; cursor: ns-resize; touch-action: none; z-index: 1; }
+.hdl.top { top: 0; } .hdl.bot { bottom: 0; }
+.hdl::after { content: ""; position: absolute; left: 50%; top: 50%; width: 22px; height: 3px; margin: -1.5px 0 0 -11px; border-radius: 2px; background: var(--on-p); opacity: 0; transition: opacity .12s; }
+.blk:hover .hdl::after, .blk.resizing .hdl::after { opacity: .85; }
+@media (hover: none) { .hdl { height: 14px; } .hdl::after { opacity: .6; } }
+.blk.resizing { box-shadow: 0 0 0 2px var(--ink); z-index: 2; }
+body.is-resizing, body.is-resizing * { cursor: ns-resize !important; }
 .blk.preview { opacity: .6; outline: 2px dashed var(--ink); pointer-events: none; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; padding-left: 4px; font-size: 13px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 7px; }
@@ -231,7 +238,7 @@ details[open] summary { margin-bottom: 8px; }
   const KEY = 'betreuungswoche.v1';
   const $ = s => document.querySelector(s);
 
-  let state, shared = null, active = null, drag = null, lastPointer = 'mouse';
+  let state, shared = null, active = null, drag = null, resize = null, suppressClick = false, lastPointer = 'mouse';
 
   const uid = () => Math.random().toString(36).slice(2, 9);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -428,7 +435,7 @@ details[open] summary { margin-bottom: 8px; }
           }
           const label = `${p.name}, ${DAYL[d]} ${time}` + (p.type === 'eltern' ? ' (arbeitet)' : '') + (p.type === 'kita' ? `, bringt: ${b.bring || 'offen'}, holt ab: ${b.pick || 'offen'}` : '');
           lanes += `<button type="button" class="blk ${p.type}" data-p="${p.id}" data-i="${i}" title="${esc(label)}" aria-label="${esc(label)}"
-            style="--c:var(--p${p.color});${pos};top:${px(b.s)}px;height:${hgt}px">${inner}</button>`;
+            style="--c:var(--p${p.color});${pos};top:${px(b.s)}px;height:${hgt}px">${inner}<span class="hdl top" title="Beginn verschieben"></span><span class="hdl bot" title="Ende verschieben"></span></button>`;
         });
       });
       body += `<div class="lanes">${lanes}</div>`;
@@ -700,6 +707,16 @@ details[open] summary { margin-bottom: 8px; }
   const minuteAt = (bodyEl, y) => snap(START + (y - bodyEl.getBoundingClientRect().top) / hourPx() * 60);
   cal.addEventListener('pointerdown', e => {
     lastPointer = e.pointerType;
+    const hd = e.target.closest('.hdl');
+    if (hd && e.button === 0) {
+      const blkEl = hd.closest('.blk'), p = state.people.find(x => x.id === blkEl.dataset.p), i = +blkEl.dataset.i;
+      if (!p || !p.blocks[i]) return;
+      e.preventDefault();
+      resize = { p, i, edge: hd.classList.contains('top') ? 's' : 'e', bodyEl: blkEl.closest('.daybody'), blkEl, s: p.blocks[i].s, e: p.blocks[i].e, moved: false };
+      blkEl.classList.add('resizing'); document.body.classList.add('is-resizing');
+      try { blkEl.setPointerCapture(e.pointerId); } catch {}
+      return;
+    }
     if (e.pointerType === 'touch' || e.button !== 0) return;
     const bodyEl = e.target.closest('.daybody');
     if (!bodyEl || e.target.closest('.blk')) return;
@@ -723,8 +740,32 @@ details[open] summary { margin-bottom: 8px; }
     drag.pv.style.height = Math.max(3, (e - s) / 60 * H) + 'px';
     drag.pv.innerHTML = e > s ? `<span class="tm">${fmt(s)}–${fmt(e)}</span>` : '';
   }
-  cal.addEventListener('pointermove', e => { if (!drag) return; drag.m1 = minuteAt(drag.bodyEl, e.clientY); updPreview(); });
+  cal.addEventListener('pointermove', e => {
+    if (resize) {
+      const r = resize, m = minuteAt(r.bodyEl, e.clientY);
+      if (r.edge === 's') r.s = Math.min(m, r.e - STEP); else r.e = Math.max(m, r.s + STEP);
+      const b = r.p.blocks[r.i];
+      if (r.s === b.s && r.e === b.e && !r.moved) return;
+      r.moved = true;
+      const H = hourPx();
+      r.blkEl.style.top = (r.s - START) / 60 * H + 'px';
+      r.blkEl.style.height = (r.e - r.s) / 60 * H + 'px';
+      const tm = r.blkEl.querySelector('.tm'); if (tm) tm.textContent = `${fmt(r.s)}–${fmt(r.e)}`;
+      toast(`${r.p.name}: ${fmt(r.s)}–${fmt(r.e)}`);
+      return;
+    }
+    if (!drag) return; drag.m1 = minuteAt(drag.bodyEl, e.clientY); updPreview();
+  });
   const endDrag = e => {
+    if (resize) {
+      const r = resize; resize = null;
+      r.blkEl.classList.remove('resizing'); document.body.classList.remove('is-resizing');
+      if (!r.moved || e.type === 'pointercancel') { if (r.moved) render(); return; }
+      suppressClick = true; setTimeout(() => suppressClick = false, 50);
+      Object.assign(r.p.blocks[r.i], { s: r.s, e: r.e });
+      changed();
+      return;
+    }
     if (!drag) return;
     if (e.type === 'pointerup') drag.m1 = minuteAt(drag.bodyEl, e.clientY);
     const { p, d, m0, m1, pv } = drag; drag = null; pv.remove();
@@ -741,6 +782,7 @@ details[open] summary { margin-bottom: 8px; }
   cal.addEventListener('pointerup', endDrag);
   cal.addEventListener('pointercancel', endDrag);
   cal.addEventListener('click', e => {
+    if (suppressClick) { suppressClick = false; return; }
     const blk = e.target.closest('.blk');
     if (blk && blk.dataset.p) { const p = state.people.find(x => x.id === blk.dataset.p); blockDlg(p, +blk.dataset.i); return; }
     const bodyEl = e.target.closest('.daybody');
