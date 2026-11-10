@@ -15,6 +15,7 @@ Ein einfacher Wochenplan (Montag bis Freitag, 7 bis 18 Uhr), mit dem Familien au
 - **Kalender:** Zeiten direkt mit der Maus ziehen oder für mehrere Tage auf einmal eintragen.
 - **Lücken und Hinweise:** Zeiten ohne Betreuung werden rot markiert. Die App warnt, wenn die Person zum Bringen oder Abholen zu der Zeit arbeitet oder nicht eingeplant ist.
 - **Plan teilen:** Ein Klick erzeugt einen Link, der den ganzen Plan enthält.
+- **Deutsch und Englisch:** Die App folgt der Sprache deines Geräts. Mit dem Schalter DE/EN oben rechts lässt sie sich umstellen; die Wahl wird gemerkt.
 
 ## Datenschutz
 
@@ -35,7 +36,7 @@ Eine einzige Datei (`index.html`) mit HTML, CSS und JavaScript, ohne Abhängigke
 
 **Live:** https://alexanderhaberzettl.github.io/Unsere-Betreuungswoche/
 
-A simple weekly planner (Monday to Friday, 7 am to 6 pm) that lets families see at a glance whether childcare is fully covered. The app itself is in German.
+A simple weekly planner (Monday to Friday, 7 am to 6 pm) that lets families see at a glance whether childcare is fully covered. The app is available in English and German; it follows your device language, and the DE/EN switch in the top right remembers your choice.
 
 ## Features
 

@@ -65,7 +65,14 @@ button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.top { display: flex; flex-direction: column; gap: 4px; }
+.topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.topline .eyebrow { margin: 0; }
+.topmain { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.lang { display: inline-flex; flex: none; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--surface); }
+.lang button { border: 0; background: none; padding: 5px 11px; font-weight: 600; font-size: 13px; color: var(--muted); letter-spacing: .03em; }
+.lang button:hover { color: var(--ink); }
+.lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; font-weight: 600; font-size: 14px; }
 .btn:hover { border-color: var(--muted); }
@@ -201,13 +208,19 @@ details[open] summary { margin-bottom: 8px; }
 
 <div class="wrap">
   <header class="top">
-    <div>
-      <p class="eyebrow">Montag bis Freitag · 7 bis 18 Uhr</p>
-      <h1>Unsere Betreuungswoche</h1>
+    <div class="topline">
+      <p class="eyebrow" data-i18n="eyebrow"></p>
+      <div class="lang" role="group" aria-label="Sprache / Language">
+        <button type="button" data-lang="de" lang="de" title="Deutsch">DE</button>
+        <button type="button" data-lang="en" lang="en" title="English">EN</button>
+      </div>
     </div>
-    <div class="actions">
-      <button type="button" class="btn" id="addBtn">Zeiten eintragen</button>
-      <button type="button" class="btn primary" id="shareBtn">Plan teilen</button>
+    <div class="topmain">
+      <h1 data-i18n="title"></h1>
+      <div class="actions">
+        <button type="button" class="btn" id="addBtn" data-i18n="addTimes"></button>
+        <button type="button" class="btn primary" id="shareBtn" data-i18n="share"></button>
+      </div>
     </div>
   </header>
 
@@ -216,8 +229,8 @@ details[open] summary { margin-bottom: 8px; }
 
   <section>
     <div class="sec-head">
-      <h2>Wer betreut?</h2>
-      <p class="hint" id="drawHint">Person auswählen, dann im Kalender eine Zeit ziehen. Oder „Zeiten eintragen“ nutzen.</p>
+      <h2 data-i18n="whoCares"></h2>
+      <p class="hint" id="drawHint"></p>
     </div>
     <div class="chips" id="chips"></div>
   </section>
@@ -225,10 +238,10 @@ details[open] summary { margin-bottom: 8px; }
   <section class="calendar">
     <div class="cal-scroll"><div class="cal" id="cal"></div></div>
     <div class="legend">
-      <span><i class="sw work"></i>Elternteil arbeitet</span>
-      <span><i class="sw ho"></i>Homeoffice</span>
-      <span><i class="sw care"></i>betreut / Kita offen</span>
-      <span><i class="sw gap"></i>Lücke: niemand da</span>
+      <span><i class="sw work"></i><span data-i18n="lgWork"></span></span>
+      <span><i class="sw ho"></i><span data-i18n="lgHo"></span></span>
+      <span><i class="sw care"></i><span data-i18n="lgCare"></span></span>
+      <span><i class="sw gap"></i><span data-i18n="lgGap"></span></span>
     </div>
   </section>
 
@@ -243,12 +256,178 @@ details[open] summary { margin-bottom: 8px; }
 (() => {
   // Öffentliche Adresse dieser Seite; Teilen-Links bauen darauf auf.
   const SHARE_BASE = '';
-  const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
-  const DAYL = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
   const START = 7 * 60, END = 18 * 60, STEP = 15;
-  const TYPES = { eltern: 'Elternteil', betreuung: 'Betreuung', kita: 'Kindergarten' };
-  const KEY = 'betreuungswoche.v1';
+  const KEY = 'betreuungswoche.v1', LANG_KEY = 'betreuungswoche.lang';
   const $ = s => document.querySelector(s);
+
+  // ---------- Sprachen ----------
+  const L = {
+    de: {
+      locale: 'de-DE',
+      eyebrow: 'Montag bis Freitag · 7 bis 18 Uhr',
+      title: 'Unsere Betreuungswoche',
+      addTimes: 'Zeiten eintragen',
+      share: 'Plan teilen',
+      whoCares: 'Wer betreut?',
+      hintDefault: 'Person auswählen, dann im Kalender eine Zeit ziehen. Oder „Zeiten eintragen“ nutzen.',
+      hintEltern: n => `Ziehe im Kalender, wann ${n} arbeitet.`,
+      hintKita: n => `Ziehe im Kalender die Öffnungszeit von ${n}.`,
+      hintCare: n => `Ziehe im Kalender, wann ${n} betreut.`,
+      lgWork: 'Elternteil arbeitet', lgHo: 'Homeoffice', lgCare: 'betreut / Kita offen', lgGap: 'Lücke: niemand da',
+      days: ['Mo', 'Di', 'Mi', 'Do', 'Fr'],
+      daysL: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'],
+      types: { eltern: 'Elternteil', betreuung: 'Betreuung', kita: 'Kindergarten' },
+      kitaName: 'Kindergarten',
+      wBringMissing: (d, t) => `${d} ${t}: Wer bringt? Noch kein Name eingetragen.`,
+      wPickMissing: (d, t) => `${d} ${t}: Wer holt ab? Noch kein Name eingetragen.`,
+      wBringWorks: (d, t, n) => `${d} ${t}: Bringen durch ${n}, aber ${n} arbeitet da noch.`,
+      wPickWorks: (d, t, n) => `${d} ${t}: Abholen durch ${n}, aber ${n} arbeitet da noch.`,
+      wBringAway: (d, t, n) => `${d} ${t}: Bringen durch ${n}, aber ${n} ist da nicht eingeplant.`,
+      wPickAway: (d, t, n) => `${d} ${t}: Abholen durch ${n}, aber ${n} ist da nicht eingeplant.`,
+      bannerShared: '<b>Du siehst einen geteilten Plan.</b> Änderungen werden erst gespeichert, wenn du ihn übernimmst.',
+      adopt: 'Als meinen Plan übernehmen', mine: 'Meinen Plan anzeigen',
+      bannerStart: '<b>Startplan: Kindergarten Mo–Fr 8:30–12:00.</b> Füge Eltern, Großeltern usw. hinzu oder fang mit einem leeren Plan an.',
+      clear: 'Leeren Plan starten',
+      nobody: 'Noch niemand eingetragen', allCovered: 'Alle Zeiten abgedeckt',
+      gapsPill: (n, h) => `${n} ${n === 1 ? 'Lücke' : 'Lücken'} · ${h} h ohne Betreuung`,
+      warnsPill: n => `${n} ${n === 1 ? 'Hinweis' : 'Hinweise'} zum Bringen/Abholen`,
+      hoursOff: names => `Arbeitszeit unvollständig: ${names}`,
+      hWork: h => `${h} h Arbeit`,
+      editP: n => `${n} bearbeiten`,
+      addPerson: '+ Person hinzufügen',
+      gapT: 'Lücke', coveredT: 'abgedeckt',
+      whoBrings: 'wer bringt?', whoPicks: 'wer holt ab?',
+      lblHo: ' (Homeoffice)', lblWork: ' (arbeitet)',
+      lblKita: (b, p) => `, bringt: ${b || 'offen'}, holt ab: ${p || 'offen'}`,
+      hoShort: 'HO',
+      moveStart: 'Beginn verschieben', moveEnd: 'Ende verschieben',
+      gapLine: (s, e) => `${s}–${e} Uhr niemand da`,
+      noGaps: 'Keine Lücken. Mo bis Fr ist von 7 bis 18 Uhr immer jemand da.',
+      addToSee: 'Füge Personen hinzu, um die Abdeckung zu sehen.',
+      warnsOk: 'Bringen und Abholen passt zu den eingetragenen Zeiten.',
+      hoursLine: (ist, soll) => `${ist} von ${soll} h eingetragen`,
+      hoPart: h => `, davon ${h} h Homeoffice`,
+      missing: h => ` (es fehlen ${h} h)`, tooMuch: h => ` (${h} h zu viel)`,
+      hoursEmpty: 'Bei Elternteilen kannst du die Wochenstunden angeben.',
+      cGaps: 'Lücken', cBP: 'Bringen &amp; Abholen', cHours: 'Arbeitszeiten',
+      helpEltern: 'Trage ein, wann diese Person arbeitet. Außerhalb davon gilt sie als verfügbar.',
+      helpCare: 'Zum Beispiel Großeltern oder Babysitter. Trage ein, wann die Person das Kind betreut.',
+      helpKita: 'Trage die Betreuungszeiten ein und wer das Kind bringt und abholt.',
+      dlgAddPerson: 'Person hinzufügen', name: 'Name', namePh: 'z. B. Mama, Opa, Kita Sonnenschein', role: 'Rolle',
+      hoursPerWeek: 'Arbeitsstunden pro Woche', hoursPh: 'z. B. 30', color: 'Farbe', colorN: i => `Farbe ${i}`,
+      del: 'Löschen', cancel: 'Abbrechen', add: 'Hinzufügen', save: 'Speichern', reallyDel: 'Wirklich löschen?',
+      needName: 'Bitte einen Namen eingeben.', added: n => `${n} hinzugefügt. Jetzt Zeiten eintragen.`,
+      bringsName: 'Bringt (Name)', picksName: 'Holt ab (Name)', bringPh: 'z. B. Papa', pickPh: 'z. B. Oma',
+      from: 'Von', to: 'Bis', ho: 'Homeoffice', badTime: '„Bis“ muss nach „Von“ liegen (zwischen 7 und 18 Uhr).',
+      forWhom: 'Für wen?', whichDays: 'An welchen Tagen?', enter: 'Eintragen',
+      addHelpEltern: n => `Arbeitszeit von ${n}.`,
+      addHelpKita: n => `Betreuungszeit im ${n}, mit Namen fürs Bringen und Abholen.`,
+      addHelpCare: n => `Wann ${n} das Kind betreut.`,
+      needDay: 'Bitte mindestens einen Tag wählen.',
+      subWork: 'Arbeitszeit', subKita: 'Betreuungszeit', subCare: 'Betreut das Kind',
+      shareSub: 'Der ganze Plan steckt in diesem Link. Wer ihn öffnet, sieht genau diesen Stand. Nach Änderungen einfach neu teilen.',
+      linkAria: 'Link zum Plan', copy: 'Kopieren', copied: 'Kopiert', copiedT: 'In die Zwischenablage kopiert.',
+      selectedT: 'Text ist markiert. Jetzt kopieren (⌘C / Strg+C).',
+      codeSummary: 'Link funktioniert nicht? Plan-Code verwenden', codeGive: 'Plan-Code zum Weitergeben',
+      codePaste: 'Erhaltenen Plan-Code oder Link einfügen', openPlan: 'Plan öffnen', closeB: 'Schließen',
+      badCode: 'Das ist kein gültiger Plan-Code.', sharedLoaded: 'Geteilter Plan geladen.',
+      linkFail: 'Link konnte nicht erstellt werden.', adopted: 'Plan übernommen und gespeichert.',
+      brokenLink: 'Der geteilte Link ist unvollständig oder beschädigt.'
+    },
+    en: {
+      locale: 'en-GB',
+      eyebrow: 'Monday to Friday · 7 am to 6 pm',
+      title: 'Our Childcare Week',
+      addTimes: 'Add times',
+      share: 'Share plan',
+      whoCares: 'Who looks after the child?',
+      hintDefault: 'Pick a person, then drag a time range in the calendar. Or use “Add times”.',
+      hintEltern: n => `Drag in the calendar when ${n} works.`,
+      hintKita: n => `Drag the opening hours of ${n} in the calendar.`,
+      hintCare: n => `Drag in the calendar when ${n} looks after the child.`,
+      lgWork: 'Parent working', lgHo: 'Working from home', lgCare: 'Childcare / kindergarten open', lgGap: 'Gap: nobody available',
+      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      daysL: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      types: { eltern: 'Parent', betreuung: 'Caregiver', kita: 'Kindergarten' },
+      kitaName: 'Kindergarten',
+      wBringMissing: (d, t) => `${d} ${t}: Who does drop-off? No name entered yet.`,
+      wPickMissing: (d, t) => `${d} ${t}: Who does pick-up? No name entered yet.`,
+      wBringWorks: (d, t, n) => `${d} ${t}: ${n} does drop-off but is still working then.`,
+      wPickWorks: (d, t, n) => `${d} ${t}: ${n} does pick-up but is still working then.`,
+      wBringAway: (d, t, n) => `${d} ${t}: ${n} does drop-off but isn't scheduled then.`,
+      wPickAway: (d, t, n) => `${d} ${t}: ${n} does pick-up but isn't scheduled then.`,
+      bannerShared: '<b>You are viewing a shared plan.</b> Changes are only saved once you make it your plan.',
+      adopt: 'Make it my plan', mine: 'Show my plan',
+      bannerStart: '<b>Starter plan: kindergarten Mon–Fri 8:30–12:00.</b> Add parents, grandparents and others, or start with an empty plan.',
+      clear: 'Start empty plan',
+      nobody: 'Nobody added yet', allCovered: 'All times covered',
+      gapsPill: (n, h) => `${n} ${n === 1 ? 'gap' : 'gaps'} · ${h} h without childcare`,
+      warnsPill: n => `${n} drop-off/pick-up ${n === 1 ? 'note' : 'notes'}`,
+      hoursOff: names => `Working hours incomplete: ${names}`,
+      hWork: h => `${h} h work`,
+      editP: n => `Edit ${n}`,
+      addPerson: '+ Add person',
+      gapT: 'Gap', coveredT: 'covered',
+      whoBrings: 'who drops off?', whoPicks: 'who picks up?',
+      lblHo: ' (working from home)', lblWork: ' (working)',
+      lblKita: (b, p) => `, drop-off: ${b || 'open'}, pick-up: ${p || 'open'}`,
+      hoShort: 'WFH',
+      moveStart: 'Move start', moveEnd: 'Move end',
+      gapLine: (s, e) => `${s}–${e} nobody available`,
+      noGaps: 'No gaps. Someone is always available Mon–Fri from 7 am to 6 pm.',
+      addToSee: 'Add people to see the coverage.',
+      warnsOk: 'Drop-off and pick-up fit the entered times.',
+      hoursLine: (ist, soll) => `${ist} of ${soll} h entered`,
+      hoPart: h => `, of which ${h} h from home`,
+      missing: h => ` (${h} h missing)`, tooMuch: h => ` (${h} h too many)`,
+      hoursEmpty: 'You can enter weekly hours for parents.',
+      cGaps: 'Gaps', cBP: 'Drop-off &amp; pick-up', cHours: 'Working hours',
+      helpEltern: 'Enter when this person works. Outside of that they count as available.',
+      helpCare: 'For example grandparents or a babysitter. Enter when this person looks after the child.',
+      helpKita: 'Enter the opening hours and who drops off and picks up the child.',
+      dlgAddPerson: 'Add person', name: 'Name', namePh: 'e.g. Mum, Grandpa, Sunshine Kindergarten', role: 'Role',
+      hoursPerWeek: 'Working hours per week', hoursPh: 'e.g. 30', color: 'Colour', colorN: i => `Colour ${i}`,
+      del: 'Delete', cancel: 'Cancel', add: 'Add', save: 'Save', reallyDel: 'Really delete?',
+      needName: 'Please enter a name.', added: n => `${n} added. Now add their times.`,
+      bringsName: 'Drop-off (name)', picksName: 'Pick-up (name)', bringPh: 'e.g. Dad', pickPh: 'e.g. Grandma',
+      from: 'From', to: 'To', ho: 'Working from home', badTime: '“To” must be after “From” (between 7:00 and 18:00).',
+      forWhom: 'For whom?', whichDays: 'Which days?', enter: 'Add',
+      addHelpEltern: n => `Working hours of ${n}.`,
+      addHelpKita: n => `Opening hours of ${n}, with names for drop-off and pick-up.`,
+      addHelpCare: n => `When ${n} looks after the child.`,
+      needDay: 'Please choose at least one day.',
+      subWork: 'Working hours', subKita: 'Opening hours', subCare: 'Looks after the child',
+      shareSub: 'The whole plan is contained in this link. Whoever opens it sees exactly this version. Share again after changes.',
+      linkAria: 'Link to the plan', copy: 'Copy', copied: 'Copied', copiedT: 'Copied to clipboard.',
+      selectedT: 'Text is selected. Copy it now (⌘C / Ctrl+C).',
+      codeSummary: 'Link not working? Use a plan code', codeGive: 'Plan code to pass on',
+      codePaste: 'Paste a plan code or link you received', openPlan: 'Open plan', closeB: 'Close',
+      badCode: 'That is not a valid plan code.', sharedLoaded: 'Shared plan loaded.',
+      linkFail: 'Could not create the link.', adopted: 'Plan saved as yours.',
+      brokenLink: 'The shared link is incomplete or damaged.'
+    }
+  };
+  function detectLang() {
+    try { const s = localStorage.getItem(LANG_KEY); if (s === 'de' || s === 'en') return s; } catch {}
+    const langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
+    return String(langs[0] || 'en').toLowerCase().startsWith('de') ? 'de' : 'en';
+  }
+  let lang = detectLang();
+  const t = (k, ...a) => { const v = L[lang][k]; return typeof v === 'function' ? v(...a) : v; };
+
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    document.title = t('title');
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  }
+  function setLang(l) {
+    if (l === lang) return;
+    lang = l;
+    try { localStorage.setItem(LANG_KEY, l); } catch {}
+    if (dlg.open) dlg.close();
+    applyStatic(); render();
+  }
 
   let state, shared = null, active = null, drag = null, resize = null, suppressClick = false, lastPointer = 'mouse';
 
@@ -258,7 +437,7 @@ details[open] summary { margin-bottom: 8px; }
   const toInput = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
   const parseT = v => { const [h, mm] = (v || '0:0').split(':').map(Number); return h * 60 + (mm || 0); };
   const snap = m => Math.min(END, Math.max(START, Math.round(m / STEP) * STEP));
-  const fmtH = x => x.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+  const fmtH = x => x.toLocaleString(t('locale'), { maximumFractionDigits: 2 });
   const hourPx = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hour')) || 48;
   const byName = n => state.people.find(p => p.name.trim().toLowerCase() === String(n || '').trim().toLowerCase());
 
@@ -268,7 +447,7 @@ details[open] summary { margin-bottom: 8px; }
     return {
       example: true,
       people: [
-        { id: uid(), name: 'Kindergarten', type: 'kita', color: 3, blocks: wk([0, 1, 2, 3, 4], 510, 720, { bring: '', pick: '' }) }
+        { id: uid(), name: t('kitaName'), type: 'kita', color: 3, blocks: wk([0, 1, 2, 3, 4], 510, 720, { bring: '', pick: '' }) }
       ]
     };
   }
@@ -304,13 +483,13 @@ details[open] summary { margin-bottom: 8px; }
   const overlaps = (b, d, s, e) => b.d === d && b.s < e && b.e > s;
   function coverage() {
     const n = (END - START) / STEP;
-    return DAYS.map((_, d) => {
+    return [0, 1, 2, 3, 4].map(d => {
       const arr = [];
       for (let i = 0; i < n; i++) {
-        const t = START + i * STEP, t2 = t + STEP;
+        const t0 = START + i * STEP, t2 = t0 + STEP;
         arr.push(state.people.some(p => p.type === 'eltern'
-          ? !p.blocks.some(b => overlaps(b, d, t, t2))
-          : p.blocks.some(b => overlaps(b, d, t, t2))));
+          ? !p.blocks.some(b => overlaps(b, d, t0, t2))
+          : p.blocks.some(b => overlaps(b, d, t0, t2))));
       }
       return arr;
     });
@@ -326,15 +505,15 @@ details[open] summary { margin-bottom: 8px; }
   }
   function hoursOf(p) { return p.blocks.reduce((a, b) => a + (b.e - b.s), 0) / 60; }
 
-  function checkPerson(name, d, t, what) {
-    if (!String(name || '').trim()) return `${DAYS[d]} ${fmt(t)}: Wer ${what === 'bring' ? 'bringt' : 'holt ab'}? Noch kein Name eingetragen.`;
+  function checkPerson(name, d, tm, what) {
+    const day = t('days')[d], time = fmt(tm), B = what === 'bring';
+    if (!String(name || '').trim()) return t(B ? 'wBringMissing' : 'wPickMissing', day, time);
     const p = byName(name);
     if (!p) return null;
-    const verb = what === 'bring' ? 'Bringen' : 'Abholen';
-    if (p.type === 'eltern' && p.blocks.some(b => b.d === d && b.s < t && b.e > t))
-      return `${DAYS[d]} ${fmt(t)}: ${verb} durch ${p.name}, aber ${p.name} arbeitet da noch.`;
-    if (p.type === 'betreuung' && !p.blocks.some(b => b.d === d && b.s <= t && b.e >= t))
-      return `${DAYS[d]} ${fmt(t)}: ${verb} durch ${p.name}, aber ${p.name} ist da nicht eingeplant.`;
+    if (p.type === 'eltern' && p.blocks.some(b => b.d === d && b.s < tm && b.e > tm))
+      return t(B ? 'wBringWorks' : 'wPickWorks', day, time, p.name);
+    if (p.type === 'betreuung' && !p.blocks.some(b => b.d === d && b.s <= tm && b.e >= tm))
+      return t(B ? 'wBringAway' : 'wPickAway', day, time, p.name);
     return null;
   }
   function analyse() {
@@ -365,67 +544,68 @@ details[open] summary { margin-bottom: 8px; }
     const el = $('#banner');
     if (shared) {
       el.hidden = false;
-      el.innerHTML = `<p><b>Du siehst einen geteilten Plan.</b> Änderungen werden erst gespeichert, wenn du ihn übernimmst.</p>
-        <div class="actions"><button type="button" class="btn primary" data-act="adopt">Als meinen Plan übernehmen</button>
-        <button type="button" class="btn" data-act="mine">Meinen Plan anzeigen</button></div>`;
+      el.innerHTML = `<p>${t('bannerShared')}</p>
+        <div class="actions"><button type="button" class="btn primary" data-act="adopt">${t('adopt')}</button>
+        <button type="button" class="btn" data-act="mine">${t('mine')}</button></div>`;
     } else if (state.example) {
       el.hidden = false;
-      el.innerHTML = `<p><b>Startplan: Kindergarten Mo–Fr 8:30–12:00.</b> Füge Eltern, Großeltern usw. hinzu oder fang mit einem leeren Plan an.</p>
-        <div class="actions"><button type="button" class="btn" data-act="clear">Leeren Plan starten</button></div>`;
+      el.innerHTML = `<p>${t('bannerStart')}</p>
+        <div class="actions"><button type="button" class="btn" data-act="clear">${t('clear')}</button></div>`;
     } else el.hidden = true;
   }
 
   function renderStatus(a) {
     const parts = [];
-    if (!state.people.length) parts.push(`<span class="pill warn">Noch niemand eingetragen</span>`);
-    else if (!a.gaps.length) parts.push(`<span class="pill ok">Alle Zeiten abgedeckt</span>`);
+    if (!state.people.length) parts.push(`<span class="pill warn">${t('nobody')}</span>`);
+    else if (!a.gaps.length) parts.push(`<span class="pill ok">${t('allCovered')}</span>`);
     else {
       const mins = a.gaps.reduce((s, g) => s + g.e - g.s, 0);
-      parts.push(`<span class="pill gap">${a.gaps.length} ${a.gaps.length === 1 ? 'Lücke' : 'Lücken'} · ${fmtH(mins / 60)} h ohne Betreuung</span>`);
+      parts.push(`<span class="pill gap">${t('gapsPill', a.gaps.length, fmtH(mins / 60))}</span>`);
     }
-    if (a.warns.length) parts.push(`<span class="pill warn">${a.warns.length} ${a.warns.length === 1 ? 'Hinweis' : 'Hinweise'} zum Bringen/Abholen</span>`);
+    if (a.warns.length) parts.push(`<span class="pill warn">${t('warnsPill', a.warns.length)}</span>`);
     const off = a.hours.filter(h => Math.abs(h.ist - h.p.hours) > .01);
-    if (off.length) parts.push(`<span class="pill warn">Arbeitszeit unvollständig: ${off.map(h => esc(h.p.name)).join(', ')}</span>`);
+    if (off.length) parts.push(`<span class="pill warn">${t('hoursOff', off.map(h => esc(h.p.name)).join(', '))}</span>`);
     $('#status').innerHTML = parts.join('');
   }
 
   const pencil = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
   function renderChips() {
     const html = state.people.map(p => {
-      let sub = TYPES[p.type];
+      let sub = t('types')[p.type];
       if (p.type === 'eltern') {
         const ist = hoursOf(p);
         if (p.hours > 0) {
           const ok = Math.abs(ist - p.hours) < .01;
           sub += ` · <span class="${ok ? 'ok' : 'warn'}">${fmtH(ist)} / ${fmtH(p.hours)} h</span>`;
-        } else sub += ` · ${fmtH(ist)} h Arbeit`;
+        } else sub += ` · ${t('hWork', fmtH(ist))}`;
       }
       return `<div class="chip ${p.type} ${active === p.id ? 'active' : ''}" style="--c:var(--p${p.color})">
         <button type="button" class="chip-main" data-sel="${p.id}" aria-pressed="${active === p.id}">
           <span class="dot"></span><span><span class="chip-name">${esc(p.name)}</span><span class="chip-sub">${sub}</span></span>
         </button>
-        <button type="button" class="chip-edit" data-edit="${p.id}" aria-label="${esc(p.name)} bearbeiten">${pencil}</button>
+        <button type="button" class="chip-edit" data-edit="${p.id}" aria-label="${esc(t('editP', p.name))}">${pencil}</button>
       </div>`;
     }).join('');
-    $('#chips').innerHTML = html + `<button type="button" class="chip-add" id="addPerson">+ Person hinzufügen</button>`;
+    $('#chips').innerHTML = html + `<button type="button" class="chip-add" id="addPerson">${t('addPerson')}</button>`;
     const ap = state.people.find(p => p.id === active);
     $('#drawHint').textContent = ap
-      ? (ap.type === 'eltern' ? `Ziehe im Kalender, wann ${ap.name} arbeitet.` : ap.type === 'kita' ? `Ziehe im Kalender die Öffnungszeit von ${ap.name}.` : `Ziehe im Kalender, wann ${ap.name} betreut.`)
-      : 'Person auswählen, dann im Kalender eine Zeit ziehen. Oder „Zeiten eintragen“ nutzen.';
+      ? t(ap.type === 'eltern' ? 'hintEltern' : ap.type === 'kita' ? 'hintKita' : 'hintCare', ap.name)
+      : t('hintDefault');
   }
 
   function renderCal(a) {
     const H = hourPx(), px = m => (m - START) / 60 * H;
     const n = Math.max(1, state.people.length);
+    const DAYL = t('daysL');
     $('#cal').style.setProperty('--lanes', n);
     let h = `<div class="corner"></div>` + DAYL.map((name, d) => {
       const bad = a.gaps.some(g => g.d === d);
-      return `<div class="dayhead"><span class="dd ${bad ? 'no' : ''}" title="${bad ? 'Lücke' : 'abgedeckt'}"></span>${name}</div>`;
+      return `<div class="dayhead"><span class="dd ${bad ? 'no' : ''}" title="${bad ? t('gapT') : t('coveredT')}"></span>${name}</div>`;
     }).join('');
     let times = '';
-    for (let t = 7; t <= 18; t++) times += `<span style="top:${(t - 7) * H}px">${t}:00</span>`;
+    for (let hr = 7; hr <= 18; hr++) times += `<span style="top:${(hr - 7) * H}px">${hr}:00</span>`;
     h += `<div class="times">${times}</div>`;
-    DAYS.forEach((_, d) => {
+    [0, 1, 2, 3, 4].forEach(d => {
       let body = '';
       a.gaps.filter(g => g.d === d).forEach(g => body += `<div class="gapband" style="top:${px(g.s)}px;height:${px(g.e) - px(g.s)}px"></div>`);
       body += `<div class="strip">` + runs(a.cov[d], true).map(([s, e]) => `<i style="top:${px(s)}px;height:${px(e) - px(s)}px"></i>`).join('')
@@ -440,15 +620,15 @@ details[open] summary { margin-bottom: 8px; }
           const time = `${fmt(b.s)}–${fmt(b.e)}`;
           let inner;
           if (p.type === 'kita') {
-            inner = `<span class="bp ${b.bring ? '' : 'miss'}">↓ ${esc(b.bring || 'wer bringt?')}</span>`
+            inner = `<span class="bp ${b.bring ? '' : 'miss'}">↓ ${esc(b.bring || t('whoBrings'))}</span>`
               + (hgt > 56 ? `<span class="tm">${time}</span>` : '')
-              + `<span class="bp bot ${b.pick ? '' : 'miss'}">↑ ${esc(b.pick || 'wer holt ab?')}</span>`;
+              + `<span class="bp bot ${b.pick ? '' : 'miss'}">↑ ${esc(b.pick || t('whoPicks'))}</span>`;
           } else {
-            inner = `<span class="nm">${esc(p.name)}${b.ho && hgt <= 34 ? ' · HO' : ''}</span>` + (hgt > 34 ? `<span class="tm">${time}</span>` : '') + (b.ho && hgt > 50 ? `<span class="tm">Homeoffice</span>` : '');
+            inner = `<span class="nm">${esc(p.name)}${b.ho && hgt <= 34 ? ' · ' + t('hoShort') : ''}</span>` + (hgt > 34 ? `<span class="tm">${time}</span>` : '') + (b.ho && hgt > 50 ? `<span class="tm">${t('ho')}</span>` : '');
           }
-          const label = `${p.name}, ${DAYL[d]} ${time}` + (p.type === 'eltern' ? (b.ho ? ' (Homeoffice)' : ' (arbeitet)') : '') + (p.type === 'kita' ? `, bringt: ${b.bring || 'offen'}, holt ab: ${b.pick || 'offen'}` : '');
+          const label = `${p.name}, ${DAYL[d]} ${time}` + (p.type === 'eltern' ? (b.ho ? t('lblHo') : t('lblWork')) : '') + (p.type === 'kita' ? t('lblKita', b.bring, b.pick) : '');
           lanes += `<button type="button" class="blk ${p.type}${b.ho ? ' ho' : ''}" data-p="${p.id}" data-i="${i}" title="${esc(label)}" aria-label="${esc(label)}"
-            style="--c:var(--p${p.color});${pos};top:${px(b.s)}px;height:${hgt}px">${inner}<span class="hdl top" title="Beginn verschieben"></span><span class="hdl bot" title="Ende verschieben"></span></button>`;
+            style="--c:var(--p${p.color});${pos};top:${px(b.s)}px;height:${hgt}px">${inner}<span class="hdl top" title="${t('moveStart')}"></span><span class="hdl bot" title="${t('moveEnd')}"></span></button>`;
         });
       });
       body += `<div class="lanes">${lanes}</div>`;
@@ -458,16 +638,21 @@ details[open] summary { margin-bottom: 8px; }
   }
 
   function renderSummary(a) {
+    const DAYS = t('days');
     const gaps = a.gaps.length
-      ? `<ul>${a.gaps.map(g => `<li><span class="m gap"></span><b>${DAYS[g.d]}</b><span>${fmt(g.s)}–${fmt(g.e)} Uhr niemand da</span></li>`).join('')}</ul>`
-      : `<p class="empty">${state.people.length ? 'Keine Lücken. Mo bis Fr ist von 7 bis 18 Uhr immer jemand da.' : 'Füge Personen hinzu, um die Abdeckung zu sehen.'}</p>`;
+      ? `<ul>${a.gaps.map(g => `<li><span class="m gap"></span><b>${DAYS[g.d]}</b><span>${t('gapLine', fmt(g.s), fmt(g.e))}</span></li>`).join('')}</ul>`
+      : `<p class="empty">${state.people.length ? t('noGaps') : t('addToSee')}</p>`;
     const warns = a.warns.length
       ? `<ul>${a.warns.map(w => `<li><span class="m warn"></span><span>${esc(w)}</span></li>`).join('')}</ul>`
-      : `<p class="empty">Bringen und Abholen passt zu den eingetragenen Zeiten.</p>`;
+      : `<p class="empty">${t('warnsOk')}</p>`;
     const hrs = a.hours.length
-      ? `<ul>${a.hours.map(({ p, ist }) => { const ok = Math.abs(ist - p.hours) < .01; const ho = p.blocks.filter(b => b.ho).reduce((a, b) => a + b.e - b.s, 0) / 60; return `<li><span class="m ${ok ? 'ok' : 'warn'}"></span><span><b>${esc(p.name)}</b>: ${fmtH(ist)} von ${fmtH(p.hours)} h eingetragen${ho ? `, davon ${fmtH(ho)} h Homeoffice` : ''}${ok ? '' : ist < p.hours ? ` (es fehlen ${fmtH(p.hours - ist)} h)` : ` (${fmtH(ist - p.hours)} h zu viel)`}</span></li>`; }).join('')}</ul>`
-      : `<p class="empty">Bei Elternteilen kannst du die Wochenstunden angeben.</p>`;
-    $('#summary').innerHTML = `<div class="card"><h2>Lücken</h2>${gaps}</div><div class="card"><h2>Bringen &amp; Abholen</h2>${warns}</div><div class="card"><h2>Arbeitszeiten</h2>${hrs}</div>`;
+      ? `<ul>${a.hours.map(({ p, ist }) => {
+          const ok = Math.abs(ist - p.hours) < .01;
+          const ho = p.blocks.filter(b => b.ho).reduce((s, b) => s + b.e - b.s, 0) / 60;
+          return `<li><span class="m ${ok ? 'ok' : 'warn'}"></span><span><b>${esc(p.name)}</b>: ${t('hoursLine', fmtH(ist), fmtH(p.hours))}${ho ? t('hoPart', fmtH(ho)) : ''}${ok ? '' : ist < p.hours ? t('missing', fmtH(p.hours - ist)) : t('tooMuch', fmtH(ist - p.hours))}</span></li>`;
+        }).join('')}</ul>`
+      : `<p class="empty">${t('hoursEmpty')}</p>`;
+    $('#summary').innerHTML = `<div class="card"><h2>${t('cGaps')}</h2>${gaps}</div><div class="card"><h2>${t('cBP')}</h2>${warns}</div><div class="card"><h2>${t('cHours')}</h2>${hrs}</div>`;
   }
 
   // ---------- Dialoge ----------
@@ -492,36 +677,32 @@ details[open] summary { margin-bottom: 8px; }
   function personDlg(p) {
     const isNew = !p;
     p = p || { name: '', type: 'eltern', hours: 30, color: state.people.length % 6 };
-    const help = {
-      eltern: 'Trage ein, wann diese Person arbeitet. Außerhalb davon gilt sie als verfügbar.',
-      betreuung: 'Zum Beispiel Großeltern oder Babysitter. Trage ein, wann die Person das Kind betreut.',
-      kita: 'Trage die Betreuungszeiten ein und wer das Kind bringt und abholt.'
-    };
+    const help = { eltern: t('helpEltern'), betreuung: t('helpCare'), kita: t('helpKita') };
     openDlg(`
-      <h3>${isNew ? 'Person hinzufügen' : esc(p.name) + ' bearbeiten'}</h3>
-      <label class="field">Name<input id="f-name" value="${esc(p.name)}" placeholder="z. B. Mama, Opa, Kita Sonnenschein" autocomplete="off"></label>
-      <div class="field">Rolle<div class="seg">${Object.entries(TYPES).map(([k, v]) => `<label><input type="radio" name="f-type" value="${k}" ${p.type === k ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div></div>
+      <h3>${isNew ? t('dlgAddPerson') : esc(t('editP', p.name))}</h3>
+      <label class="field">${t('name')}<input id="f-name" value="${esc(p.name)}" placeholder="${esc(t('namePh'))}" autocomplete="off"></label>
+      <div class="field">${t('role')}<div class="seg">${Object.entries(t('types')).map(([k, v]) => `<label><input type="radio" name="f-type" value="${k}" ${p.type === k ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div></div>
       <p class="helptext" id="f-help"></p>
-      <label class="field" id="f-hours-wrap">Arbeitsstunden pro Woche<input id="f-hours" type="number" min="0" max="60" step="0.5" value="${p.hours || ''}" placeholder="z. B. 30"></label>
-      <div class="field">Farbe<div class="colors">${[0, 1, 2, 3, 4, 5].map(c => `<label style="--c:var(--p${c})"><input type="radio" name="f-color" value="${c}" ${p.color === c ? 'checked' : ''} aria-label="Farbe ${c + 1}"><span></span></label>`).join('')}</div></div>
-      <div class="dlg-foot">${isNew ? '' : '<button type="button" class="btn danger" id="f-del">Löschen</button>'}<span class="spacer"></span>
-        <button type="button" class="btn" id="f-cancel">Abbrechen</button><button type="button" class="btn primary" id="f-save">${isNew ? 'Hinzufügen' : 'Speichern'}</button></div>`,
+      <label class="field" id="f-hours-wrap">${t('hoursPerWeek')}<input id="f-hours" type="number" min="0" max="60" step="0.5" value="${p.hours || ''}" placeholder="${esc(t('hoursPh'))}"></label>
+      <div class="field">${t('color')}<div class="colors">${[0, 1, 2, 3, 4, 5].map(c => `<label style="--c:var(--p${c})"><input type="radio" name="f-color" value="${c}" ${p.color === c ? 'checked' : ''} aria-label="${t('colorN', c + 1)}"><span></span></label>`).join('')}</div></div>
+      <div class="dlg-foot">${isNew ? '' : `<button type="button" class="btn danger" id="f-del">${t('del')}</button>`}<span class="spacer"></span>
+        <button type="button" class="btn" id="f-cancel">${t('cancel')}</button><button type="button" class="btn primary" id="f-save">${isNew ? t('add') : t('save')}</button></div>`,
       b => {
         const sync = () => {
-          const t = b.querySelector('[name=f-type]:checked').value;
-          b.querySelector('#f-help').textContent = help[t];
-          b.querySelector('#f-hours-wrap').hidden = t !== 'eltern';
+          const ty = b.querySelector('[name=f-type]:checked').value;
+          b.querySelector('#f-help').textContent = help[ty];
+          b.querySelector('#f-hours-wrap').hidden = ty !== 'eltern';
         };
         b.querySelectorAll('[name=f-type]').forEach(r => r.addEventListener('change', sync)); sync();
         b.querySelector('#f-cancel').onclick = close;
-        if (!isNew) twoStep(b.querySelector('#f-del'), 'Wirklich löschen?', () => {
+        if (!isNew) twoStep(b.querySelector('#f-del'), t('reallyDel'), () => {
           state.people = state.people.filter(x => x.id !== p.id);
           if (active === p.id) active = null;
           close(); changed();
         });
         const doSave = () => {
           const name = b.querySelector('#f-name').value.trim();
-          if (!name) { b.querySelector('#f-name').focus(); toast('Bitte einen Namen eingeben.'); return; }
+          if (!name) { b.querySelector('#f-name').focus(); toast(t('needName')); return; }
           const type = b.querySelector('[name=f-type]:checked').value;
           const hours = parseFloat(b.querySelector('#f-hours').value) || 0;
           const color = +b.querySelector('[name=f-color]:checked').value;
@@ -535,7 +716,7 @@ details[open] summary { margin-bottom: 8px; }
             Object.assign(p, { name, type, hours: type === 'eltern' ? hours : 0, color });
           }
           close(); changed();
-          if (isNew) toast(`${name} hinzugefügt. Jetzt Zeiten eintragen.`);
+          if (isNew) toast(t('added', name));
         };
         b.querySelector('#f-save').onclick = doSave;
         b.querySelector('#f-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSave(); } });
@@ -543,15 +724,15 @@ details[open] summary { margin-bottom: 8px; }
   }
 
   const kitaFields = (b = {}) => `<div class="row" id="f-kita">
-      <label class="field">Bringt (Name)<input id="f-bring" list="names" value="${esc(b.bring || '')}" placeholder="z. B. Papa" autocomplete="off"></label>
-      <label class="field">Holt ab (Name)<input id="f-pick" list="names" value="${esc(b.pick || '')}" placeholder="z. B. Oma" autocomplete="off"></label></div>`;
+      <label class="field">${t('bringsName')}<input id="f-bring" list="names" value="${esc(b.bring || '')}" placeholder="${esc(t('bringPh'))}" autocomplete="off"></label>
+      <label class="field">${t('picksName')}<input id="f-pick" list="names" value="${esc(b.pick || '')}" placeholder="${esc(t('pickPh'))}" autocomplete="off"></label></div>`;
   const timeFields = (s, e) => `<div class="row">
-      <label class="field">Von<input id="f-s" type="time" min="07:00" max="18:00" step="900" value="${toInput(s)}"></label>
-      <label class="field">Bis<input id="f-e" type="time" min="07:00" max="18:00" step="900" value="${toInput(e)}"></label></div>`;
-  const hoField = (on, id = 'f-howrap') => `<label class="check" id="${id}"><input type="checkbox" id="f-ho" ${on ? 'checked' : ''}>Homeoffice</label>`;
+      <label class="field">${t('from')}<input id="f-s" type="time" min="07:00" max="18:00" step="900" value="${toInput(s)}"></label>
+      <label class="field">${t('to')}<input id="f-e" type="time" min="07:00" max="18:00" step="900" value="${toInput(e)}"></label></div>`;
+  const hoField = on => `<label class="check" id="f-howrap"><input type="checkbox" id="f-ho" ${on ? 'checked' : ''}>${t('ho')}</label>`;
   function readTimes(b) {
-    let s = snap(parseT(b.querySelector('#f-s').value)), e = snap(parseT(b.querySelector('#f-e').value));
-    if (e <= s) { toast('„Bis“ muss nach „Von“ liegen (zwischen 7 und 18 Uhr).'); return null; }
+    const s = snap(parseT(b.querySelector('#f-s').value)), e = snap(parseT(b.querySelector('#f-e').value));
+    if (e <= s) { toast(t('badTime')); return null; }
     return [s, e];
   }
 
@@ -561,32 +742,32 @@ details[open] summary { margin-bottom: 8px; }
     const days = pre.d != null ? [pre.d] : [0, 1, 2, 3, 4];
     const s = pre.s ?? 480, e = pre.e ?? Math.min(END, s + 240);
     openDlg(`
-      <h3>Zeiten eintragen</h3>
-      <label class="field">Für wen?<select id="f-p">${state.people.map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${esc(p.name)} (${TYPES[p.type]})</option>`).join('')}</select></label>
+      <h3>${t('addTimes')}</h3>
+      <label class="field">${t('forWhom')}<select id="f-p">${state.people.map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${esc(p.name)} (${t('types')[p.type]})</option>`).join('')}</select></label>
       <p class="helptext" id="f-help"></p>
-      <div class="field">An welchen Tagen?<div class="seg">${DAYS.map((d, i) => `<label><input type="checkbox" name="f-d" value="${i}" ${days.includes(i) ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></div>
+      <div class="field">${t('whichDays')}<div class="seg">${t('days').map((d, i) => `<label><input type="checkbox" name="f-d" value="${i}" ${days.includes(i) ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></div>
       ${timeFields(s, e)}
       ${hoField(false)}
       ${kitaFields()}
-      <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="f-cancel">Abbrechen</button><button type="button" class="btn primary" id="f-save">Eintragen</button></div>`,
+      <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="f-cancel">${t('cancel')}</button><button type="button" class="btn primary" id="f-save">${t('enter')}</button></div>`,
       b => {
         const sync = () => {
           const p = state.people.find(x => x.id === b.querySelector('#f-p').value);
           b.querySelector('#f-kita').hidden = p.type !== 'kita';
           b.querySelector('#f-howrap').hidden = p.type !== 'eltern';
-          b.querySelector('#f-help').textContent = p.type === 'eltern' ? `Arbeitszeit von ${p.name}.` : p.type === 'kita' ? `Betreuungszeit im ${p.name}, mit Namen fürs Bringen und Abholen.` : `Wann ${p.name} das Kind betreut.`;
+          b.querySelector('#f-help').textContent = t(p.type === 'eltern' ? 'addHelpEltern' : p.type === 'kita' ? 'addHelpKita' : 'addHelpCare', p.name);
         };
         b.querySelector('#f-p').onchange = sync; sync();
         b.querySelector('#f-cancel').onclick = close;
         b.querySelector('#f-save').onclick = () => {
           const p = state.people.find(x => x.id === b.querySelector('#f-p').value);
           const ds = [...b.querySelectorAll('[name=f-d]:checked')].map(x => +x.value);
-          if (!ds.length) { toast('Bitte mindestens einen Tag wählen.'); return; }
-          const t = readTimes(b); if (!t) return;
+          if (!ds.length) { toast(t('needDay')); return; }
+          const tt = readTimes(b); if (!tt) return;
           const extra = p.type === 'kita' ? { bring: b.querySelector('#f-bring').value.trim(), pick: b.querySelector('#f-pick').value.trim() }
             : p.type === 'eltern' && b.querySelector('#f-ho').checked ? { ho: true } : {};
-          if (p.type === 'kita') p.blocks = p.blocks.filter(x => !ds.includes(x.d) || !overlaps(x, x.d, t[0], t[1]));
-          ds.forEach(d => p.blocks.push({ d, s: t[0], e: t[1], ...extra }));
+          if (p.type === 'kita') p.blocks = p.blocks.filter(x => !ds.includes(x.d) || !overlaps(x, x.d, tt[0], tt[1]));
+          ds.forEach(d => p.blocks.push({ d, s: tt[0], e: tt[1], ...extra }));
           active = p.id;
           close(); changed();
         };
@@ -597,18 +778,18 @@ details[open] summary { margin-bottom: 8px; }
     const bl = p.blocks[i];
     openDlg(`
       <h3>${esc(p.name)}</h3>
-      <p class="sub">${DAYL[bl.d]} · ${p.type === 'eltern' ? 'Arbeitszeit' : p.type === 'kita' ? 'Betreuungszeit' : 'Betreut das Kind'}</p>
+      <p class="sub">${t('daysL')[bl.d]} · ${p.type === 'eltern' ? t('subWork') : p.type === 'kita' ? t('subKita') : t('subCare')}</p>
       ${timeFields(bl.s, bl.e)}
       ${p.type === 'eltern' ? hoField(bl.ho) : ''}
       ${p.type === 'kita' ? kitaFields(bl) : ''}
-      <div class="dlg-foot"><button type="button" class="btn danger" id="f-del">Löschen</button><span class="spacer"></span>
-        <button type="button" class="btn" id="f-cancel">Abbrechen</button><button type="button" class="btn primary" id="f-save">Speichern</button></div>`,
+      <div class="dlg-foot"><button type="button" class="btn danger" id="f-del">${t('del')}</button><span class="spacer"></span>
+        <button type="button" class="btn" id="f-cancel">${t('cancel')}</button><button type="button" class="btn primary" id="f-save">${t('save')}</button></div>`,
       b => {
         b.querySelector('#f-cancel').onclick = close;
         b.querySelector('#f-del').onclick = () => { p.blocks.splice(i, 1); close(); changed(); };
         b.querySelector('#f-save').onclick = () => {
-          const t = readTimes(b); if (!t) return;
-          Object.assign(bl, { s: t[0], e: t[1] });
+          const tt = readTimes(b); if (!tt) return;
+          Object.assign(bl, { s: tt[0], e: tt[1] });
           if (p.type === 'kita') { bl.bring = b.querySelector('#f-bring').value.trim(); bl.pick = b.querySelector('#f-pick').value.trim(); }
           if (p.type === 'eltern') { if (b.querySelector('#f-ho').checked) bl.ho = true; else delete bl.ho; }
           close(); changed();
@@ -642,10 +823,10 @@ details[open] summary { margin-bottom: 8px; }
   }
   function unpack(arr) {
     const T = { e: 'eltern', b: 'betreuung', k: 'kita' };
-    return { people: arr.map(([name, t, hours, color, bl]) => ({
-      id: uid(), name: String(name), type: T[t] || 'betreuung', hours: +hours || 0, color: (+color || 0) % 6,
+    return { people: arr.map(([name, ty, hours, color, bl]) => ({
+      id: uid(), name: String(name), type: T[ty] || 'betreuung', hours: +hours || 0, color: (+color || 0) % 6,
       blocks: bl.map(([d, s, e, x, y]) => ({ d: +d, s: START + s * STEP, e: START + e * STEP,
-        ...(T[t] === 'kita' ? { bring: x || '', pick: y || '' } : {}), ...(T[t] === 'eltern' && x ? { ho: true } : {}) }))
+        ...(T[ty] === 'kita' ? { bring: x || '', pick: y || '' } : {}), ...(T[ty] === 'eltern' && x ? { ho: true } : {}) }))
     })) };
   }
   async function encodePlan(st) {
@@ -657,7 +838,7 @@ details[open] summary { margin-bottom: 8px; }
   }
   async function decodePlan(code) {
     const m = /^p1([zr])([0-9A-Za-z]+)$/.exec(code.trim().replace(/^.*#/, ''));
-    if (!m) throw new Error('Kein gültiger Plan-Code');
+    if (!m) throw new Error('bad');
     let bytes = fromB62(m[2]);
     if (m[1] === 'z') bytes = await streamBytes(bytes, DecompressionStream);
     const st = unpack(JSON.parse(new TextDecoder().decode(bytes)));
@@ -670,19 +851,19 @@ details[open] summary { margin-bottom: 8px; }
     const code = await encodePlan(state);
     const link = baseUrl() + '#' + code;
     openDlg(`
-      <h3>Plan teilen</h3>
-      <p class="sub">Der ganze Plan steckt in diesem Link. Wer ihn öffnet, sieht genau diesen Stand. Nach Änderungen einfach neu teilen.</p>
-      <div class="linkbox"><input id="f-link" readonly value="${esc(link)}" aria-label="Link zum Plan"><button type="button" class="btn primary" id="f-copy">Kopieren</button></div>
-      <details><summary>Link funktioniert nicht? Plan-Code verwenden</summary>
-        <div class="field">Plan-Code zum Weitergeben<div class="linkbox"><input id="f-code" readonly value="${esc(code)}"><button type="button" class="btn" id="f-copy2">Kopieren</button></div></div>
-        <label class="field" style="margin-top:10px">Erhaltenen Plan-Code oder Link einfügen<textarea id="f-in" rows="3" placeholder="p1z…"></textarea></label>
-        <div class="dlg-foot"><button type="button" class="btn" id="f-load">Plan öffnen</button></div>
+      <h3>${t('share')}</h3>
+      <p class="sub">${t('shareSub')}</p>
+      <div class="linkbox"><input id="f-link" readonly value="${esc(link)}" aria-label="${esc(t('linkAria'))}"><button type="button" class="btn primary" id="f-copy">${t('copy')}</button></div>
+      <details><summary>${t('codeSummary')}</summary>
+        <div class="field">${t('codeGive')}<div class="linkbox"><input id="f-code" readonly value="${esc(code)}"><button type="button" class="btn" id="f-copy2">${t('copy')}</button></div></div>
+        <label class="field" style="margin-top:10px">${t('codePaste')}<textarea id="f-in" rows="3" placeholder="p1z…"></textarea></label>
+        <div class="dlg-foot"><button type="button" class="btn" id="f-load">${t('openPlan')}</button></div>
       </details>
-      <div class="dlg-foot"><button type="button" class="btn" id="f-cancel">Schließen</button></div>`,
+      <div class="dlg-foot"><button type="button" class="btn" id="f-cancel">${t('closeB')}</button></div>`,
       b => {
         const copy = (inp, btn) => {
-          const ok = () => { btn.textContent = 'Kopiert'; toast('In die Zwischenablage kopiert.'); };
-          const fallback = () => { inp.focus(); inp.select(); toast('Text ist markiert. Jetzt kopieren (⌘C / Strg+C).'); };
+          const ok = () => { btn.textContent = t('copied'); toast(t('copiedT')); };
+          const fallback = () => { inp.focus(); inp.select(); toast(t('selectedT')); };
           try { navigator.clipboard.writeText(inp.value).then(ok, fallback); } catch { fallback(); }
         };
         b.querySelector('#f-copy').onclick = e => copy(b.querySelector('#f-link'), e.currentTarget);
@@ -691,7 +872,7 @@ details[open] summary { margin-bottom: 8px; }
         b.querySelector('#f-cancel').onclick = close;
         b.querySelector('#f-load').onclick = async () => {
           try { openShared(await decodePlan(b.querySelector('#f-in').value)); close(); }
-          catch { toast('Das ist kein gültiger Plan-Code.'); }
+          catch { toast(t('badCode')); }
         };
       });
   }
@@ -700,7 +881,7 @@ details[open] summary { margin-bottom: 8px; }
     const own = loadOwn();
     if (!own || !own.people || !own.people.length || own.example) {
       state = st; shared = null; active = null; save(); render();
-      clearHash(); toast('Geteilter Plan geladen.');
+      clearHash(); toast(t('sharedLoaded'));
     } else {
       shared = true; state = st; active = null; render();
     }
@@ -708,11 +889,12 @@ details[open] summary { margin-bottom: 8px; }
   function clearHash() { try { history.replaceState(null, '', location.href.split('#')[0]); } catch {} }
 
   // ---------- Ereignisse ----------
+  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
   $('#addBtn').onclick = () => addDlg();
-  $('#shareBtn').onclick = () => shareDlg().catch(() => toast('Link konnte nicht erstellt werden.'));
+  $('#shareBtn').onclick = () => shareDlg().catch(() => toast(t('linkFail')));
   $('#banner').addEventListener('click', e => {
     const act = e.target.closest('[data-act]')?.dataset.act;
-    if (act === 'adopt') { shared = null; state.example = false; save(); clearHash(); render(); toast('Plan übernommen und gespeichert.'); }
+    if (act === 'adopt') { shared = null; state.example = false; save(); clearHash(); render(); toast(t('adopted')); }
     if (act === 'mine') { shared = null; state = loadOwn() || example(); clearHash(); render(); }
     if (act === 'clear') { state = { people: [] }; active = null; save(); render(); personDlg(); }
   });
@@ -809,18 +991,19 @@ details[open] summary { margin-bottom: 8px; }
     if (bodyEl && lastPointer === 'touch') addDlg({ pid: active, d: +bodyEl.dataset.d, s: minuteAt(bodyEl, e.clientY) });
   });
 
-  let tt;
+  let toastTimer;
   function toast(msg) {
-    const t = $('#toast'); t.textContent = msg; t.hidden = false;
-    clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2600);
+    const el = $('#toast'); el.textContent = msg; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 2600);
   }
 
   // ---------- Start ----------
+  applyStatic();
   state = loadOwn() || example();
   if (!state.people) state = example();
   render();
   const h = location.hash.slice(1);
-  if (/^p1[zr]/.test(h)) decodePlan(h).then(openShared).catch(() => toast('Der geteilte Link ist unvollständig oder beschädigt.'));
+  if (/^p1[zr]/.test(h)) decodePlan(h).then(openShared).catch(() => toast(t('brokenLink')));
 })();
 </script>
 
