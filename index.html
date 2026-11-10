@@ -120,6 +120,7 @@ button { cursor: pointer; }
 .lanebg { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--c) 9%, transparent); border-radius: 4px; pointer-events: none; }
 .blk { position: absolute; border-radius: 6px; background: var(--c); color: var(--on-p); font-size: 11.5px; line-height: 1.25; padding: 3px 4px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; gap: 1px; border: 0; text-align: left; font-variant-numeric: tabular-nums; }
 .blk.eltern { background: repeating-linear-gradient(135deg, var(--c) 0 7px, color-mix(in srgb, var(--c) 72%, var(--surface)) 7px 14px); }
+.blk.eltern.ho { background: radial-gradient(circle, color-mix(in srgb, var(--c) 40%, var(--surface)) 0 1.8px, transparent 2.3px) 0 0 / 8px 8px, var(--c); }
 .blk:hover { filter: brightness(1.06); box-shadow: 0 0 0 2px var(--ink); }
 .blk .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .blk .tm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .92; }
@@ -138,7 +139,10 @@ body.is-resizing, body.is-resizing * { cursor: ns-resize !important; }
 .legend span { display: inline-flex; align-items: center; gap: 7px; }
 .sw { width: 18px; height: 12px; border-radius: 3px; display: inline-block; }
 .sw.work { background: repeating-linear-gradient(135deg, var(--muted) 0 3px, transparent 3px 6px); border: 1px solid var(--muted); }
+.sw.ho { background: radial-gradient(circle, var(--muted) 0 1.3px, transparent 1.7px) 0 0 / 5px 5px; border: 1px solid var(--muted); }
 .sw.care { background: var(--muted); }
+.check { display: flex; align-items: center; gap: 9px; font-size: 14.5px; font-weight: 500; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
 .sw.gap { background: repeating-linear-gradient(135deg, var(--gap-soft) 0 3px, transparent 3px 6px); border: 1px dashed var(--gap); }
 
 .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
@@ -215,6 +219,7 @@ details[open] summary { margin-bottom: 8px; }
     <div class="cal-scroll"><div class="cal" id="cal"></div></div>
     <div class="legend">
       <span><i class="sw work"></i>Elternteil arbeitet</span>
+      <span><i class="sw ho"></i>Homeoffice</span>
       <span><i class="sw care"></i>betreut / Kita offen</span>
       <span><i class="sw gap"></i>Lücke: niemand da</span>
     </div>
@@ -281,7 +286,7 @@ details[open] summary { margin-bottom: 8px; }
     const out = [];
     for (const b of bl) {
       const last = out[out.length - 1];
-      if (last && last.d === b.d && b.s <= last.e) {
+      if (last && last.d === b.d && b.s <= last.e && !!last.ho === !!b.ho) {
         if (b.e > last.e) { last.e = b.e; if (p.type === 'kita') last.pick = b.pick || last.pick; }
       } else out.push({ ...b });
     }
@@ -431,10 +436,10 @@ details[open] summary { margin-bottom: 8px; }
               + (hgt > 56 ? `<span class="tm">${time}</span>` : '')
               + `<span class="bp bot ${b.pick ? '' : 'miss'}">↑ ${esc(b.pick || 'wer holt ab?')}</span>`;
           } else {
-            inner = `<span class="nm">${esc(p.name)}</span>` + (hgt > 34 ? `<span class="tm">${time}</span>` : '');
+            inner = `<span class="nm">${esc(p.name)}${b.ho && hgt <= 34 ? ' · HO' : ''}</span>` + (hgt > 34 ? `<span class="tm">${time}</span>` : '') + (b.ho && hgt > 50 ? `<span class="tm">Homeoffice</span>` : '');
           }
-          const label = `${p.name}, ${DAYL[d]} ${time}` + (p.type === 'eltern' ? ' (arbeitet)' : '') + (p.type === 'kita' ? `, bringt: ${b.bring || 'offen'}, holt ab: ${b.pick || 'offen'}` : '');
-          lanes += `<button type="button" class="blk ${p.type}" data-p="${p.id}" data-i="${i}" title="${esc(label)}" aria-label="${esc(label)}"
+          const label = `${p.name}, ${DAYL[d]} ${time}` + (p.type === 'eltern' ? (b.ho ? ' (Homeoffice)' : ' (arbeitet)') : '') + (p.type === 'kita' ? `, bringt: ${b.bring || 'offen'}, holt ab: ${b.pick || 'offen'}` : '');
+          lanes += `<button type="button" class="blk ${p.type}${b.ho ? ' ho' : ''}" data-p="${p.id}" data-i="${i}" title="${esc(label)}" aria-label="${esc(label)}"
             style="--c:var(--p${p.color});${pos};top:${px(b.s)}px;height:${hgt}px">${inner}<span class="hdl top" title="Beginn verschieben"></span><span class="hdl bot" title="Ende verschieben"></span></button>`;
         });
       });
@@ -452,7 +457,7 @@ details[open] summary { margin-bottom: 8px; }
       ? `<ul>${a.warns.map(w => `<li><span class="m warn"></span><span>${esc(w)}</span></li>`).join('')}</ul>`
       : `<p class="empty">Bringen und Abholen passt zu den eingetragenen Zeiten.</p>`;
     const hrs = a.hours.length
-      ? `<ul>${a.hours.map(({ p, ist }) => { const ok = Math.abs(ist - p.hours) < .01; return `<li><span class="m ${ok ? 'ok' : 'warn'}"></span><span><b>${esc(p.name)}</b>: ${fmtH(ist)} von ${fmtH(p.hours)} h eingetragen${ok ? '' : ist < p.hours ? ` (es fehlen ${fmtH(p.hours - ist)} h)` : ` (${fmtH(ist - p.hours)} h zu viel)`}</span></li>`; }).join('')}</ul>`
+      ? `<ul>${a.hours.map(({ p, ist }) => { const ok = Math.abs(ist - p.hours) < .01; const ho = p.blocks.filter(b => b.ho).reduce((a, b) => a + b.e - b.s, 0) / 60; return `<li><span class="m ${ok ? 'ok' : 'warn'}"></span><span><b>${esc(p.name)}</b>: ${fmtH(ist)} von ${fmtH(p.hours)} h eingetragen${ho ? `, davon ${fmtH(ho)} h Homeoffice` : ''}${ok ? '' : ist < p.hours ? ` (es fehlen ${fmtH(p.hours - ist)} h)` : ` (${fmtH(ist - p.hours)} h zu viel)`}</span></li>`; }).join('')}</ul>`
       : `<p class="empty">Bei Elternteilen kannst du die Wochenstunden angeben.</p>`;
     $('#summary').innerHTML = `<div class="card"><h2>Lücken</h2>${gaps}</div><div class="card"><h2>Bringen &amp; Abholen</h2>${warns}</div><div class="card"><h2>Arbeitszeiten</h2>${hrs}</div>`;
   }
@@ -535,6 +540,7 @@ details[open] summary { margin-bottom: 8px; }
   const timeFields = (s, e) => `<div class="row">
       <label class="field">Von<input id="f-s" type="time" min="07:00" max="18:00" step="900" value="${toInput(s)}"></label>
       <label class="field">Bis<input id="f-e" type="time" min="07:00" max="18:00" step="900" value="${toInput(e)}"></label></div>`;
+  const hoField = (on, id = 'f-howrap') => `<label class="check" id="${id}"><input type="checkbox" id="f-ho" ${on ? 'checked' : ''}>Homeoffice</label>`;
   function readTimes(b) {
     let s = snap(parseT(b.querySelector('#f-s').value)), e = snap(parseT(b.querySelector('#f-e').value));
     if (e <= s) { toast('„Bis“ muss nach „Von“ liegen (zwischen 7 und 18 Uhr).'); return null; }
@@ -552,12 +558,14 @@ details[open] summary { margin-bottom: 8px; }
       <p class="helptext" id="f-help"></p>
       <div class="field">An welchen Tagen?<div class="seg">${DAYS.map((d, i) => `<label><input type="checkbox" name="f-d" value="${i}" ${days.includes(i) ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></div>
       ${timeFields(s, e)}
+      ${hoField(false)}
       ${kitaFields()}
       <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="f-cancel">Abbrechen</button><button type="button" class="btn primary" id="f-save">Eintragen</button></div>`,
       b => {
         const sync = () => {
           const p = state.people.find(x => x.id === b.querySelector('#f-p').value);
           b.querySelector('#f-kita').hidden = p.type !== 'kita';
+          b.querySelector('#f-howrap').hidden = p.type !== 'eltern';
           b.querySelector('#f-help').textContent = p.type === 'eltern' ? `Arbeitszeit von ${p.name}.` : p.type === 'kita' ? `Betreuungszeit im ${p.name}, mit Namen fürs Bringen und Abholen.` : `Wann ${p.name} das Kind betreut.`;
         };
         b.querySelector('#f-p').onchange = sync; sync();
@@ -567,7 +575,8 @@ details[open] summary { margin-bottom: 8px; }
           const ds = [...b.querySelectorAll('[name=f-d]:checked')].map(x => +x.value);
           if (!ds.length) { toast('Bitte mindestens einen Tag wählen.'); return; }
           const t = readTimes(b); if (!t) return;
-          const extra = p.type === 'kita' ? { bring: b.querySelector('#f-bring').value.trim(), pick: b.querySelector('#f-pick').value.trim() } : {};
+          const extra = p.type === 'kita' ? { bring: b.querySelector('#f-bring').value.trim(), pick: b.querySelector('#f-pick').value.trim() }
+            : p.type === 'eltern' && b.querySelector('#f-ho').checked ? { ho: true } : {};
           if (p.type === 'kita') p.blocks = p.blocks.filter(x => !ds.includes(x.d) || !overlaps(x, x.d, t[0], t[1]));
           ds.forEach(d => p.blocks.push({ d, s: t[0], e: t[1], ...extra }));
           active = p.id;
@@ -582,6 +591,7 @@ details[open] summary { margin-bottom: 8px; }
       <h3>${esc(p.name)}</h3>
       <p class="sub">${DAYL[bl.d]} · ${p.type === 'eltern' ? 'Arbeitszeit' : p.type === 'kita' ? 'Betreuungszeit' : 'Betreut das Kind'}</p>
       ${timeFields(bl.s, bl.e)}
+      ${p.type === 'eltern' ? hoField(bl.ho) : ''}
       ${p.type === 'kita' ? kitaFields(bl) : ''}
       <div class="dlg-foot"><button type="button" class="btn danger" id="f-del">Löschen</button><span class="spacer"></span>
         <button type="button" class="btn" id="f-cancel">Abbrechen</button><button type="button" class="btn primary" id="f-save">Speichern</button></div>`,
@@ -592,6 +602,7 @@ details[open] summary { margin-bottom: 8px; }
           const t = readTimes(b); if (!t) return;
           Object.assign(bl, { s: t[0], e: t[1] });
           if (p.type === 'kita') { bl.bring = b.querySelector('#f-bring').value.trim(); bl.pick = b.querySelector('#f-pick').value.trim(); }
+          if (p.type === 'eltern') { if (b.querySelector('#f-ho').checked) bl.ho = true; else delete bl.ho; }
           close(); changed();
         };
       });
@@ -619,13 +630,14 @@ details[open] summary { margin-bottom: 8px; }
   }
   function pack(st) {
     return st.people.map(p => [p.name, p.type[0], p.hours || 0, p.color,
-      p.blocks.map(b => { const a = [b.d, (b.s - START) / STEP, (b.e - START) / STEP]; if (p.type === 'kita') a.push(b.bring || '', b.pick || ''); return a; })]);
+      p.blocks.map(b => { const a = [b.d, (b.s - START) / STEP, (b.e - START) / STEP]; if (p.type === 'kita') a.push(b.bring || '', b.pick || ''); else if (b.ho) a.push(1); return a; })]);
   }
   function unpack(arr) {
     const T = { e: 'eltern', b: 'betreuung', k: 'kita' };
     return { people: arr.map(([name, t, hours, color, bl]) => ({
       id: uid(), name: String(name), type: T[t] || 'betreuung', hours: +hours || 0, color: (+color || 0) % 6,
-      blocks: bl.map(([d, s, e, bring, pick]) => ({ d: +d, s: START + s * STEP, e: START + e * STEP, ...(T[t] === 'kita' ? { bring: bring || '', pick: pick || '' } : {}) }))
+      blocks: bl.map(([d, s, e, x, y]) => ({ d: +d, s: START + s * STEP, e: START + e * STEP,
+        ...(T[t] === 'kita' ? { bring: x || '', pick: y || '' } : {}), ...(T[t] === 'eltern' && x ? { ho: true } : {}) }))
     })) };
   }
   async function encodePlan(st) {
