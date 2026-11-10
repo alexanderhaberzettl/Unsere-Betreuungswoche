@@ -103,7 +103,14 @@ button { cursor: pointer; }
 
 .calendar { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 12px 12px; }
 .cal-scroll { overflow-x: auto; }
-.cal { display: grid; grid-template-columns: 44px repeat(5, minmax(140px, 1fr)); column-gap: 6px; min-width: 0; }
+.cal { --lanes: 1; display: grid; grid-template-columns: 44px repeat(5, minmax(max(140px, calc(var(--lanes) * 52px + 16px)), 1fr)); column-gap: 6px; min-width: 0; }
+@media (max-width: 700px) {
+  .cal { grid-template-columns: 40px repeat(5, max(min(78vw, 300px), calc(var(--lanes) * 76px + 16px))); }
+  .cal .times, .cal .corner { position: sticky; left: 0; z-index: 3; background: var(--surface); }
+  .blk { font-size: 12.5px; }
+  .cal-scroll { scroll-snap-type: x proximity; }
+  .daybody { scroll-snap-align: start; scroll-margin-left: 46px; }
+}
 .dayhead { font-family: var(--font-display); font-weight: 600; font-size: 15px; padding: 0 4px 8px 12px; display: flex; align-items: center; gap: 8px; }
 .dayhead .dd { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
 .dayhead .dd.no { background: var(--gap); }
@@ -410,7 +417,8 @@ details[open] summary { margin-bottom: 8px; }
   function renderCal(a) {
     const H = hourPx(), px = m => (m - START) / 60 * H;
     const n = Math.max(1, state.people.length);
-    let h = `<div></div>` + DAYL.map((name, d) => {
+    $('#cal').style.setProperty('--lanes', n);
+    let h = `<div class="corner"></div>` + DAYL.map((name, d) => {
       const bad = a.gaps.some(g => g.d === d);
       return `<div class="dayhead"><span class="dd ${bad ? 'no' : ''}" title="${bad ? 'Lücke' : 'abgedeckt'}"></span>${name}</div>`;
     }).join('');
