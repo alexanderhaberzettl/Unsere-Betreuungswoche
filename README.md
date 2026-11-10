@@ -1,5 +1,7 @@
 # Unsere Betreuungswoche
 
+*[English version below](#english)*
+
 **Live:** https://alexanderhaberzettl.github.io/Unsere-Betreuungswoche/
 
 Ein einfacher Wochenplan (Montag bis Freitag, 7 bis 18 Uhr), mit dem Familien auf einen Blick sehen, ob die Kinderbetreuung lückenlos abgedeckt ist.
@@ -26,3 +28,34 @@ Hinweis: Wer einen geteilten Link hat, kann den Plan lesen. Teile ihn also nur m
 ## Technik
 
 Eine einzige Datei (`index.html`) mit HTML, CSS und JavaScript, ohne Abhängigkeiten. Gehostet mit GitHub Pages.
+
+---
+
+# English
+
+**Live:** https://alexanderhaberzettl.github.io/Unsere-Betreuungswoche/
+
+A simple weekly planner (Monday to Friday, 7 am to 6 pm) that lets families see at a glance whether childcare is fully covered. The app itself is in German.
+
+## Features
+
+- **Add people** with a role:
+  - **Parent:** enter working hours; outside of them the person counts as available. Includes weekly hours (e.g. 30 h) with a planned vs. entered check.
+  - **Caregiver:** e.g. grandparents or a babysitter, with the times they look after the child.
+  - **Kindergarten:** opening hours per day, plus who drops off and who picks up.
+- **Calendar:** drag times directly with the mouse, or enter them for several days at once.
+- **Gaps and warnings:** times without anyone available are marked red. The app warns when the person doing drop-off or pick-up is working at that time or isn't scheduled.
+- **Share a plan:** one click creates a link that contains the entire plan.
+
+## Privacy
+
+- **Nothing is stored anywhere.** There is no server, no database and no account.
+- **No tracking, no analytics, no cookies.** The page loads no scripts, fonts or other content from third parties.
+- **Everything stays private in your browser.** Your plan is only kept in your browser's local storage (localStorage).
+- **Sharing via the URL.** When you share, the plan is compressed and encoded in the link after the `#`. Browsers never send this part of a link to any server, not even to GitHub. Only people who have the link can see the plan.
+
+Note: anyone with a shared link can read the plan, so only share it with people who should see it.
+
+## Tech
+
+A single file (`index.html`) with HTML, CSS and JavaScript and no dependencies. Hosted on GitHub Pages.
