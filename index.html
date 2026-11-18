@@ -151,6 +151,7 @@ button { cursor: pointer; }
 .blk .tm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .92; }
 .blk .bp { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .blk .bp.bot { margin-top: auto; }
+.blk .kn { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .85; }
 .blk .bp.miss { opacity: .75; font-style: italic; }
 .hdl { position: absolute; left: 0; right: 0; height: 9px; cursor: ns-resize; touch-action: none; z-index: 1; }
 .hdl.top { top: 0; } .hdl.bot { bottom: 0; }
@@ -348,9 +349,9 @@ details[open] summary { margin-bottom: 8px; }
       linkFail: 'Link konnte nicht erstellt werden.', adopted: 'Plan übernommen und gespeichert.',
       brokenLink: 'Der geteilte Link ist unvollständig oder beschädigt.',
       kids: 'Kinder', addKid: '+ Kind hinzufügen',
-      kidHint: 'Mehrere Kinder? Lege sie hier an und wähle bei Kita und Betreuung, für wen sie gelten.',
+      kidHint: 'Mehrere Kinder? Lege sie hier an. Beim Eintragen von Kita- und Betreuungszeiten wählst du dann, für welches Kind sie gelten.',
       dlgAddKid: 'Kind hinzufügen', kidNamePh: 'z. B. Anna',
-      kidHelp: 'Elternteile gelten für alle Kinder. Bei Kindergarten und Betreuung wählst du, für welche Kinder sie da sind.',
+      kidHelp: 'Elternteile gelten für alle Kinder. Bei Kita- und Betreuungszeiten wählst du beim Eintragen oder per Klick auf den Block, für welche Kinder sie gelten.',
       forKids: 'Für welche Kinder?', allKids: 'Alle Kinder', needKid: 'Bitte mindestens ein Kind wählen.',
       viewLabel: 'Ansicht',
       gapLineKid: (s, e, k) => `${s}–${e} Uhr: niemand für ${k} da`
@@ -427,9 +428,9 @@ details[open] summary { margin-bottom: 8px; }
       linkFail: 'Could not create the link.', adopted: 'Plan saved as yours.',
       brokenLink: 'The shared link is incomplete or damaged.',
       kids: 'Children', addKid: '+ Add child',
-      kidHint: 'More than one child? Add them here, then choose for kindergarten and caregivers which children they cover.',
+      kidHint: 'More than one child? Add them here. When you add kindergarten or caregiver times, you then choose which child they are for.',
       dlgAddKid: 'Add child', kidNamePh: 'e.g. Anna',
-      kidHelp: 'Parents count for all children. For kindergarten and caregivers you choose which children they look after.',
+      kidHelp: 'Parents count for all children. For kindergarten and caregiver times you choose which children they cover when adding them, or by clicking the block.',
       forKids: 'Which children?', allKids: 'All children', needKid: 'Please choose at least one child.',
       viewLabel: 'View',
       gapLineKid: (s, e, k) => `${s}–${e}: nobody for ${k}`
@@ -469,12 +470,26 @@ details[open] summary { margin-bottom: 8px; }
   const hourPx = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hour')) || 48;
   const kidsOf = () => (state.children && state.children.length) ? state.children : [{ id: '_', name: '' }];
   const multiKids = () => (state.children || []).length > 1;
-  const forKid = (p, k) => p.type === 'eltern' || !p.kids || !p.kids.length || p.kids.includes(k);
-  const shownPeople = () => state.people.filter(p => !viewKid || forKid(p, viewKid));
+  const blockFor = (p, b, k) => p.type === 'eltern' || !b.kids || !b.kids.length || b.kids.includes(k);
+  const kidsKey = b => (b.kids || []).slice().sort().join(',');
+  const kidsMeet = (a, b) => !a || !a.length || !b || !b.length || a.some(x => b.includes(x));
+  const kidNames = ids => state.children.filter(k => ids.includes(k.id)).map(k => k.name).join(', ');
+  const shownPeople = () => state.people;
   function fixState(st) {
     if (!st.children) st.children = [];
     const ids = st.children.map(k => k.id);
-    st.people.forEach(p => { if (p.kids) { p.kids = p.kids.filter(id => ids.includes(id)); if (!p.kids.length || p.type === 'eltern') delete p.kids; } });
+    st.people.forEach(p => {
+      if (p.kids) { if (p.kids.length && p.type !== 'eltern') p.blocks.forEach(b => { if (!b.kids) b.kids = p.kids.slice(); }); delete p.kids; }
+      p.blocks = p.blocks.filter(b => {
+        if (!b.kids) return true;
+        if (p.type === 'eltern') { delete b.kids; return true; }
+        const had = b.kids.length;
+        b.kids = b.kids.filter(id => ids.includes(id));
+        if (had && !b.kids.length) return false;
+        if (!b.kids.length || b.kids.length === ids.length) delete b.kids;
+        return true;
+      });
+    });
     if (viewKid && !ids.includes(viewKid)) viewKid = null;
     return st;
   }
@@ -513,7 +528,7 @@ details[open] summary { margin-bottom: 8px; }
     const out = [];
     for (const b of bl) {
       const last = out[out.length - 1];
-      if (last && last.d === b.d && b.s <= last.e && !!last.ho === !!b.ho) {
+      if (last && last.d === b.d && b.s <= last.e && !!last.ho === !!b.ho && kidsKey(last) === kidsKey(b)) {
         if (b.e > last.e) { last.e = b.e; if (p.type === 'kita') last.pick = b.pick || last.pick; }
       } else out.push({ ...b });
     }
@@ -524,14 +539,13 @@ details[open] summary { margin-bottom: 8px; }
   const overlaps = (b, d, s, e) => b.d === d && b.s < e && b.e > s;
   function coverage(kid) {
     const n = (END - START) / STEP;
-    const ppl = state.people.filter(p => forKid(p, kid));
     return [0, 1, 2, 3, 4].map(d => {
       const arr = [];
       for (let i = 0; i < n; i++) {
         const t0 = START + i * STEP, t2 = t0 + STEP;
-        arr.push(ppl.some(p => p.type === 'eltern'
+        arr.push(state.people.some(p => p.type === 'eltern'
           ? !p.blocks.some(b => overlaps(b, d, t0, t2))
-          : p.blocks.some(b => overlaps(b, d, t0, t2))));
+          : p.blocks.some(b => blockFor(p, b, kid) && overlaps(b, d, t0, t2))));
       }
       return arr;
     });
@@ -547,8 +561,8 @@ details[open] summary { margin-bottom: 8px; }
   }
   function hoursOf(p) { return p.blocks.reduce((a, b) => a + (b.e - b.s), 0) / 60; }
 
-  function checkPerson(name, d, tm, what) {
-    const day = t('days')[d], time = fmt(tm), B = what === 'bring';
+  function checkPerson(name, d, tm, what, kids) {
+    const day = t('days')[d] + (multiKids() && kids && kids.length ? ` (${kidNames(kids)})` : ''), time = fmt(tm), B = what === 'bring';
     if (!String(name || '').trim()) return t(B ? 'wBringMissing' : 'wPickMissing', day, time);
     const p = byName(name);
     if (!p) return null;
@@ -580,8 +594,9 @@ details[open] summary { margin-bottom: 8px; }
     });
     const warns = [];
     state.people.filter(p => p.type === 'kita').forEach(k => k.blocks.forEach(b => {
-      const w1 = checkPerson(b.bring, b.d, b.s, 'bring'); if (w1) warns.push(w1);
-      const w2 = checkPerson(b.pick, b.d, b.e, 'pick'); if (w2) warns.push(w2);
+      if (viewKid && !blockFor(k, b, viewKid)) return;
+      const w1 = checkPerson(b.bring, b.d, b.s, 'bring', b.kids); if (w1) warns.push(w1);
+      const w2 = checkPerson(b.pick, b.d, b.e, 'pick', b.kids); if (w2) warns.push(w2);
     }));
     const hours = state.people.filter(p => p.type === 'eltern' && p.hours > 0).map(p => ({ p, ist: hoursOf(p) }));
     return { cov, gaps, bands, warns, hours };
@@ -650,8 +665,9 @@ details[open] summary { margin-bottom: 8px; }
           const ok = Math.abs(ist - p.hours) < .01;
           sub += ` · <span class="${ok ? 'ok' : 'warn'}">${fmtH(ist)} / ${fmtH(p.hours)} h</span>`;
         } else sub += ` · ${t('hWork', fmtH(ist))}`;
-      } else if (multiKids() && p.kids && p.kids.length) {
-        sub += ' · ' + esc(state.children.filter(k => p.kids.includes(k.id)).map(k => k.name).join(', '));
+      } else if (multiKids() && p.blocks.length && p.blocks.every(b => b.kids && b.kids.length)) {
+        const ids = [...new Set(p.blocks.flatMap(b => b.kids))];
+        if (ids.length < state.children.length) sub += ' · ' + esc(kidNames(ids));
       }
       return `<div class="chip ${p.type} ${active === p.id ? 'active' : ''}" style="--c:var(--p${p.color})">
         <button type="button" class="chip-main" data-sel="${p.id}" aria-pressed="${active === p.id}">
@@ -693,21 +709,26 @@ details[open] summary { margin-bottom: 8px; }
       ppl.forEach((p, li) => {
         const pos = `left:calc(${li} * 100% / ${n});width:calc(100% / ${n} - 3px)`;
         if (p.id === active) lanes += `<div class="lanebg" style="--c:var(--p${p.color});${pos}"></div>`;
-        p.blocks.forEach((b, i) => {
-          if (b.d !== d) return;
+        const dayBlocks = p.blocks.map((b, i) => ({ b, i })).filter(x => x.b.d === d && (!viewKid || blockFor(p, x.b, viewKid)));
+        const ends = [];
+        dayBlocks.forEach(x => { let c = ends.findIndex(e => e <= x.b.s); if (c < 0) { c = ends.length; ends.push(0); } ends[c] = x.b.e; x.c = c; });
+        const nc = Math.max(1, ends.length);
+        dayBlocks.forEach(({ b, i, c }) => {
+          const bpos = nc === 1 ? pos : `left:calc((${li} + ${c} / ${nc}) * 100% / ${n});width:calc(100% / ${n} / ${nc} - 3px)`;
+          const kn = multiKids() && !viewKid && b.kids && b.kids.length ? `<span class="kn">${esc(kidNames(b.kids))}</span>` : '';
           const hgt = px(b.e) - px(b.s);
           const time = `${fmt(b.s)}–${fmt(b.e)}`;
           let inner;
           if (p.type === 'kita') {
-            inner = `<span class="bp ${b.bring ? '' : 'miss'}">↓ ${esc(b.bring || t('whoBrings'))}</span>`
+            inner = `<span class="bp ${b.bring ? '' : 'miss'}">↓ ${esc(b.bring || t('whoBrings'))}</span>` + kn
               + (hgt > 56 ? `<span class="tm">${time}</span>` : '')
               + `<span class="bp bot ${b.pick ? '' : 'miss'}">↑ ${esc(b.pick || t('whoPicks'))}</span>`;
           } else {
-            inner = `<span class="nm">${esc(p.name)}${b.ho && hgt <= 34 ? ' · ' + t('hoShort') : ''}</span>` + (hgt > 34 ? `<span class="tm">${time}</span>` : '') + (b.ho && hgt > 50 ? `<span class="tm">${t('ho')}</span>` : '');
+            inner = `<span class="nm">${esc(p.name)}${b.ho && hgt <= 34 ? ' · ' + t('hoShort') : ''}</span>` + kn + (hgt > 34 ? `<span class="tm">${time}</span>` : '') + (b.ho && hgt > 50 ? `<span class="tm">${t('ho')}</span>` : '');
           }
-          const label = `${p.name}, ${DAYL[d]} ${time}` + (p.type === 'eltern' ? (b.ho ? t('lblHo') : t('lblWork')) : '') + (p.type === 'kita' ? t('lblKita', b.bring, b.pick) : '');
+          const label = `${p.name}, ${DAYL[d]} ${time}` + (kn ? ` (${kidNames(b.kids)})` : '') + (p.type === 'eltern' ? (b.ho ? t('lblHo') : t('lblWork')) : '') + (p.type === 'kita' ? t('lblKita', b.bring, b.pick) : '');
           lanes += `<button type="button" class="blk ${p.type}${b.ho ? ' ho' : ''}" data-p="${p.id}" data-i="${i}" title="${esc(label)}" aria-label="${esc(label)}"
-            style="--c:var(--p${p.color});${pos};top:${px(b.s)}px;height:${hgt}px">${inner}<span class="hdl top" title="${t('moveStart')}"></span><span class="hdl bot" title="${t('moveEnd')}"></span></button>`;
+            style="--c:var(--p${p.color});${bpos};top:${px(b.s)}px;height:${hgt}px">${inner}<span class="hdl top" title="${t('moveStart')}"></span><span class="hdl bot" title="${t('moveEnd')}"></span></button>`;
         });
       });
       body += `<div class="lanes">${lanes}</div>` + labels;
@@ -762,7 +783,6 @@ details[open] summary { margin-bottom: 8px; }
       <label class="field">${t('name')}<input id="f-name" value="${esc(p.name)}" placeholder="${esc(t('namePh'))}" autocomplete="off"></label>
       <div class="field">${t('role')}<div class="seg">${Object.entries(t('types')).map(([k, v]) => `<label><input type="radio" name="f-type" value="${k}" ${p.type === k ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div></div>
       <p class="helptext" id="f-help"></p>
-      ${multiKids() ? `<div class="field" id="f-kids-wrap">${t('forKids')}<div class="seg">${state.children.map(k => `<label><input type="checkbox" name="f-kid" value="${k.id}" ${!p.kids || !p.kids.length || p.kids.includes(k.id) ? 'checked' : ''}><span>${esc(k.name)}</span></label>`).join('')}</div></div>` : ''}
       <label class="field" id="f-hours-wrap">${t('hoursPerWeek')}<input id="f-hours" type="number" min="0" max="60" step="0.5" value="${p.hours || ''}" placeholder="${esc(t('hoursPh'))}"></label>
       <div class="field">${t('color')}<div class="colors">${[0, 1, 2, 3, 4, 5].map(c => `<label style="--c:var(--p${c})"><input type="radio" name="f-color" value="${c}" ${p.color === c ? 'checked' : ''} aria-label="${t('colorN', c + 1)}"><span></span></label>`).join('')}</div></div>
       <div class="dlg-foot">${isNew ? '' : `<button type="button" class="btn danger" id="f-del">${t('del')}</button>`}<span class="spacer"></span>
@@ -772,7 +792,6 @@ details[open] summary { margin-bottom: 8px; }
           const ty = b.querySelector('[name=f-type]:checked').value;
           b.querySelector('#f-help').textContent = help[ty];
           b.querySelector('#f-hours-wrap').hidden = ty !== 'eltern';
-          const kw = b.querySelector('#f-kids-wrap'); if (kw) kw.hidden = ty === 'eltern';
         };
         b.querySelectorAll('[name=f-type]').forEach(r => r.addEventListener('change', sync)); sync();
         b.querySelector('#f-cancel').onclick = close;
@@ -787,21 +806,14 @@ details[open] summary { margin-bottom: 8px; }
           const type = b.querySelector('[name=f-type]:checked').value;
           const hours = parseFloat(b.querySelector('#f-hours').value) || 0;
           const color = +b.querySelector('[name=f-color]:checked').value;
-          let kids;
-          if (b.querySelector('#f-kids-wrap') && type !== 'eltern') {
-            const sel = [...b.querySelectorAll('[name=f-kid]:checked')].map(x => x.value);
-            if (!sel.length) { toast(t('needKid')); return; }
-            if (sel.length < state.children.length) kids = sel;
-          }
           if (isNew) {
-            const np = { id: uid(), name, type, hours: type === 'eltern' ? hours : 0, color, blocks: [], ...(kids ? { kids } : {}) };
+            const np = { id: uid(), name, type, hours: type === 'eltern' ? hours : 0, color, blocks: [] };
             state.people.push(np); active = np.id;
           } else {
             if (p.name !== name) state.people.forEach(k => k.type === 'kita' && k.blocks.forEach(bl => {
               if (bl.bring === p.name) bl.bring = name; if (bl.pick === p.name) bl.pick = name;
             }));
             Object.assign(p, { name, type, hours: type === 'eltern' ? hours : 0, color });
-            if (kids) p.kids = kids; else delete p.kids;
           }
           close(); changed();
           if (isNew) toast(t('added', name));
@@ -843,6 +855,14 @@ details[open] summary { margin-bottom: 8px; }
       <label class="field">${t('from')}<input id="f-s" type="time" min="07:00" max="18:00" step="900" value="${toInput(s)}"></label>
       <label class="field">${t('to')}<input id="f-e" type="time" min="07:00" max="18:00" step="900" value="${toInput(e)}"></label></div>`;
   const hoField = on => `<label class="check" id="f-howrap"><input type="checkbox" id="f-ho" ${on ? 'checked' : ''}>${t('ho')}</label>`;
+  const kidsField = sel => !multiKids() ? '' : `<div class="field" id="f-kids-wrap">${t('forKids')}<div class="seg">${state.children.map(k => `<label><input type="checkbox" name="f-kid" value="${k.id}" ${!sel || !sel.length || sel.includes(k.id) ? 'checked' : ''}><span>${esc(k.name)}</span></label>`).join('')}</div></div>`;
+  // null = alle Kinder, false = keins gewählt
+  function readKids(b) {
+    if (!b.querySelector('#f-kids-wrap')) return null;
+    const sel = [...b.querySelectorAll('[name=f-kid]:checked')].map(x => x.value);
+    if (!sel.length) { toast(t('needKid')); return false; }
+    return sel.length < state.children.length ? sel : null;
+  }
   function readTimes(b) {
     const s = snap(parseT(b.querySelector('#f-s').value)), e = snap(parseT(b.querySelector('#f-e').value));
     if (e <= s) { toast(t('badTime')); return null; }
@@ -860,6 +880,7 @@ details[open] summary { margin-bottom: 8px; }
       <p class="helptext" id="f-help"></p>
       <div class="field">${t('whichDays')}<div class="seg">${t('days').map((d, i) => `<label><input type="checkbox" name="f-d" value="${i}" ${days.includes(i) ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></div>
       ${timeFields(s, e)}
+      ${kidsField(viewKid ? [viewKid] : null)}
       ${hoField(false)}
       ${kitaFields()}
       <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="f-cancel">${t('cancel')}</button><button type="button" class="btn primary" id="f-save">${t('enter')}</button></div>`,
@@ -868,6 +889,7 @@ details[open] summary { margin-bottom: 8px; }
           const p = state.people.find(x => x.id === b.querySelector('#f-p').value);
           b.querySelector('#f-kita').hidden = p.type !== 'kita';
           b.querySelector('#f-howrap').hidden = p.type !== 'eltern';
+          const kw = b.querySelector('#f-kids-wrap'); if (kw) kw.hidden = p.type === 'eltern';
           b.querySelector('#f-help').textContent = t(p.type === 'eltern' ? 'addHelpEltern' : p.type === 'kita' ? 'addHelpKita' : 'addHelpCare', p.name);
         };
         b.querySelector('#f-p').onchange = sync; sync();
@@ -877,9 +899,11 @@ details[open] summary { margin-bottom: 8px; }
           const ds = [...b.querySelectorAll('[name=f-d]:checked')].map(x => +x.value);
           if (!ds.length) { toast(t('needDay')); return; }
           const tt = readTimes(b); if (!tt) return;
+          const kids = p.type === 'eltern' ? null : readKids(b); if (kids === false) return;
           const extra = p.type === 'kita' ? { bring: b.querySelector('#f-bring').value.trim(), pick: b.querySelector('#f-pick').value.trim() }
             : p.type === 'eltern' && b.querySelector('#f-ho').checked ? { ho: true } : {};
-          if (p.type === 'kita') p.blocks = p.blocks.filter(x => !ds.includes(x.d) || !overlaps(x, x.d, tt[0], tt[1]));
+          if (kids) extra.kids = kids;
+          if (p.type === 'kita') p.blocks = p.blocks.filter(x => !ds.includes(x.d) || !overlaps(x, x.d, tt[0], tt[1]) || !kidsMeet(x.kids, kids));
           ds.forEach(d => p.blocks.push({ d, s: tt[0], e: tt[1], ...extra }));
           active = p.id;
           close(); changed();
@@ -893,7 +917,7 @@ details[open] summary { margin-bottom: 8px; }
       <h3>${esc(p.name)}</h3>
       <p class="sub">${t('daysL')[bl.d]} · ${p.type === 'eltern' ? t('subWork') : p.type === 'kita' ? t('subKita') : t('subCare')}</p>
       ${timeFields(bl.s, bl.e)}
-      ${p.type === 'eltern' ? hoField(bl.ho) : ''}
+      ${p.type === 'eltern' ? hoField(bl.ho) : kidsField(bl.kids)}
       ${p.type === 'kita' ? kitaFields(bl) : ''}
       <div class="dlg-foot"><button type="button" class="btn danger" id="f-del">${t('del')}</button><span class="spacer"></span>
         <button type="button" class="btn" id="f-cancel">${t('cancel')}</button><button type="button" class="btn primary" id="f-save">${t('save')}</button></div>`,
@@ -902,6 +926,7 @@ details[open] summary { margin-bottom: 8px; }
         b.querySelector('#f-del').onclick = () => { p.blocks.splice(i, 1); close(); changed(); };
         b.querySelector('#f-save').onclick = () => {
           const tt = readTimes(b); if (!tt) return;
+          if (p.type !== 'eltern') { const kids = readKids(b); if (kids === false) return; if (kids) bl.kids = kids; else delete bl.kids; }
           Object.assign(bl, { s: tt[0], e: tt[1] });
           if (p.type === 'kita') { bl.bring = b.querySelector('#f-bring').value.trim(); bl.pick = b.querySelector('#f-pick').value.trim(); }
           if (p.type === 'eltern') { if (b.querySelector('#f-ho').checked) bl.ho = true; else delete bl.ho; }
@@ -934,8 +959,12 @@ details[open] summary { margin-bottom: 8px; }
     const kids = st.children || [];
     const people = st.people.map(p => {
       const row = [p.name, p.type[0], p.hours || 0, p.color,
-        p.blocks.map(b => { const a = [b.d, (b.s - START) / STEP, (b.e - START) / STEP]; if (p.type === 'kita') a.push(b.bring || '', b.pick || ''); else if (b.ho) a.push(1); return a; })];
-      if (p.kids && p.kids.length) row.push(p.kids.map(id => kids.findIndex(k => k.id === id)).filter(i => i >= 0));
+        p.blocks.map(b => {
+          const a = [b.d, (b.s - START) / STEP, (b.e - START) / STEP];
+          if (p.type === 'kita') a.push(b.bring || '', b.pick || ''); else if (b.ho) a.push(1);
+          if (p.type !== 'eltern' && b.kids && b.kids.length) a.push(b.kids.map(id => kids.findIndex(k => k.id === id)).filter(i => i >= 0));
+          return a;
+        })];
       return row;
     });
     return kids.length ? ['v2', people, kids.map(k => k.name)] : people;
@@ -948,8 +977,14 @@ details[open] summary { margin-bottom: 8px; }
     return { children, people: arr.map(([name, ty, hours, color, bl, kx]) => ({
       ...(Array.isArray(kx) && kx.length ? { kids: kx.map(i => children[i] && children[i].id).filter(Boolean) } : {}),
       id: uid(), name: String(name), type: T[ty] || 'betreuung', hours: +hours || 0, color: (+color || 0) % 6,
-      blocks: bl.map(([d, s, e, x, y]) => ({ d: +d, s: START + s * STEP, e: START + e * STEP,
-        ...(T[ty] === 'kita' ? { bring: x || '', pick: y || '' } : {}), ...(T[ty] === 'eltern' && x ? { ho: true } : {}) }))
+      blocks: bl.map(row => {
+        const [d, s, e, x, y] = row;
+        const kx = row.find((v, i) => i >= 3 && Array.isArray(v));
+        return { d: +d, s: START + s * STEP, e: START + e * STEP,
+          ...(T[ty] === 'kita' ? { bring: typeof x === 'string' ? x : '', pick: typeof y === 'string' ? y : '' } : {}),
+          ...(T[ty] === 'eltern' && x === 1 ? { ho: true } : {}),
+          ...(kx && T[ty] !== 'eltern' ? { kids: kx.map(i => children[i] && children[i].id).filter(Boolean) } : {}) };
+      })
     })) };
   }
   async function encodePlan(st) {
@@ -1025,8 +1060,6 @@ details[open] summary { margin-bottom: 8px; }
     const sel = e.target.closest('[data-sel]'), ed = e.target.closest('[data-edit]');
     if (sel) {
       active = active === sel.dataset.sel ? null : sel.dataset.sel;
-      const ap = state.people.find(p => p.id === active);
-      if (ap && viewKid && !forKid(ap, viewKid)) viewKid = null;
       render();
     }
     else if (ed) personDlg(state.people.find(p => p.id === ed.dataset.edit));
@@ -1113,12 +1146,13 @@ details[open] summary { margin-bottom: 8px; }
     const s = Math.min(m0, m1), en = Math.max(m0, m1);
     if (e.type === 'pointercancel') return;
     if (en - s < STEP) { addDlg({ pid: p.id, d, s, e: Math.min(END, s + 60) }); return; }
-    if (p.type === 'kita') p.blocks = p.blocks.filter(x => !overlaps(x, d, s, en));
-    const nb = { d, s, e: en };
+    const nk = p.type !== 'eltern' && viewKid && multiKids() ? [viewKid] : null;
+    if (p.type === 'kita') p.blocks = p.blocks.filter(x => !overlaps(x, d, s, en) || !kidsMeet(x.kids, nk));
+    const nb = { d, s, e: en, ...(nk ? { kids: nk } : {}) };
     if (p.type === 'kita') { const prev = p.blocks.find(x => x.bring || x.pick); nb.bring = prev?.bring || ''; nb.pick = prev?.pick || ''; }
     p.blocks.push(nb);
     changed();
-    if (p.type === 'kita') { const i = p.blocks.findIndex(x => x.d === d && x.s <= s && x.e >= en); if (i >= 0) blockDlg(p, i); }
+    if (p.type === 'kita') { const i = p.blocks.findIndex(x => x.d === d && x.s <= s && x.e >= en && kidsKey(x) === kidsKey(nb)); if (i >= 0) blockDlg(p, i); }
   };
   cal.addEventListener('pointerup', endDrag);
   cal.addEventListener('pointercancel', endDrag);

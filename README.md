@@ -14,7 +14,7 @@ Ein einfacher Wochenplan (Montag bis Freitag, 7 bis 18 Uhr), mit dem Familien au
   - **Kindergarten:** Betreuungszeiten pro Tag, dazu wer bringt und wer abholt.
 - **Kalender:** Zeiten direkt mit der Maus ziehen oder für mehrere Tage auf einmal eintragen.
 - **Lücken und Hinweise:** Zeiten ohne Betreuung werden rot markiert. Die App warnt, wenn die Person zum Bringen oder Abholen zu der Zeit arbeitet oder nicht eingeplant ist.
-- **Mehrere Kinder:** Kinder anlegen und bei Kindergarten und Betreuung auswählen, für wen sie gelten. Lücken werden pro Kind angezeigt, im Kalender lässt sich nach Kind filtern.
+- **Mehrere Kinder:** Kinder anlegen und bei jeder Kita- oder Betreuungszeit auswählen, für welches Kind sie gilt (z. B. Anna bis 12:00, Ben bis 15:00 im selben Kindergarten). Lücken werden pro Kind angezeigt, im Kalender lässt sich nach Kind filtern.
 - **Plan teilen:** Ein Klick erzeugt einen Link, der den ganzen Plan enthält.
 - **Deutsch und Englisch:** Die App folgt der Sprache deines Geräts. Mit dem Schalter DE/EN oben rechts lässt sie sich umstellen; die Wahl wird gemerkt.
 
@@ -47,7 +47,7 @@ A simple weekly planner (Monday to Friday, 7 am to 6 pm) that lets families see 
   - **Kindergarten:** opening hours per day, plus who drops off and who picks up.
 - **Calendar:** drag times directly with the mouse, or enter them for several days at once.
 - **Gaps and warnings:** times without anyone available are marked red. The app warns when the person doing drop-off or pick-up is working at that time or isn't scheduled.
-- **Multiple children:** add children and choose for kindergarten and caregivers which children they cover. Gaps are shown per child, and the calendar can be filtered by child.
+- **Multiple children:** add children and choose for each kindergarten or caregiver time which child it is for (e.g. Anna until 12:00, Ben until 15:00 at the same kindergarten). Gaps are shown per child, and the calendar can be filtered by child.
 - **Share a plan:** one click creates a link that contains the entire plan.
 
 ## Privacy
