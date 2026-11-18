@@ -90,7 +90,13 @@ button { cursor: pointer; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.danger { color: var(--gap); }
+.btn.danger-fill { background: var(--gap); border-color: var(--gap); color: #fff; }
 .btn.ghost { border-color: transparent; background: transparent; }
+.foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+.foot .btn { padding-left: 10px; padding-right: 10px; }
+.wkdate { margin-top: 8px; }
+.wkr { color: var(--muted); font-size: 14px; font-weight: 500; }
+.dlg-note { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0 0; font-size: 14px; }
 
 .banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 16px; border-radius: 12px; background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
 .banner p { margin: 0; flex: 1 1 260px; min-width: 0; }
@@ -244,6 +250,7 @@ details[open] summary { margin-bottom: 8px; }
       <h1 data-i18n="title"></h1>
       <div class="actions">
         <button type="button" class="btn" id="addBtn" data-i18n="addTimes"></button>
+        <button type="button" class="btn" id="icsBtn" data-i18n="ics"></button>
         <button type="button" class="btn primary" id="shareBtn" data-i18n="share"></button>
       </div>
     </div>
@@ -274,6 +281,11 @@ details[open] summary { margin-bottom: 8px; }
   </section>
 
   <section class="summary" id="summary"></section>
+
+  <footer class="foot">
+    <span data-i18n="footNote"></span>
+    <button type="button" class="btn ghost danger" id="resetBtn" data-i18n="reset"></button>
+  </footer>
 </div>
 
 <dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
@@ -370,6 +382,17 @@ details[open] summary { margin-bottom: 8px; }
       kidHelp: 'Elternteile gelten für alle Kinder. Bei Einrichtungen und weiteren Personen wählst du beim Eintragen oder per Klick auf den Block, für welche Kinder sie gelten.',
       forKids: 'Für welche Kinder?', allKids: 'Alle Kinder', kidsNone: 'Noch keine Kinder angelegt – gilt für alle.', kidsMixed: 'Die Zeiten gelten gerade für unterschiedliche Kinder. Eine Änderung hier gilt für alle Zeiten.', addKidShort: '+ Kind', needKid: 'Bitte mindestens ein Kind wählen.',
       viewLabel: 'Ansicht',
+      ics: 'Kalender', icsTip: 'In Kalender exportieren (.ics)', icsTitle: 'In Kalender exportieren',
+      icsSub: 'Lädt eine .ics-Datei, die du in Apple-, Google- oder Outlook-Kalender importieren kannst.',
+      icsWho: 'Wessen Zeiten?', icsAll: 'Alle', icsWeek: 'Welche Woche?', wkThis: 'Diese Woche', wkNext: 'Nächste Woche', wkPick: 'Andere Woche',
+      wkDate: 'Ein Tag in der gewünschten Woche', icsGo: '.ics herunterladen', icsNeedP: 'Bitte mindestens eine Person oder Einrichtung wählen.',
+      icsNone: 'Für die Auswahl sind keine Zeiten eingetragen.', icsDone: n => `${n} ${n === 1 ? 'Termin' : 'Termine'} exportiert.`,
+      icsHere: 'Hier in claude.ai sind .ics-Downloads nicht möglich. Öffne den Plan in der GitHub-Version und exportiere ihn dort.', icsOpenGh: 'In GitHub-Version öffnen',
+      evWork: n => `${n}: Arbeit`, evHo: n => `${n}: Homeoffice`, evCare: n => `${n} betreut`,
+      evBring: n => `Bringt: ${n}`, evPick: n => `Holt ab: ${n}`, evKids: 'Kinder', openV: 'offen',
+      footNote: 'Dein Plan wird nur in diesem Browser gespeichert.', reset: 'Alles löschen',
+      resetQ: 'Alles löschen?', resetTxt: 'Löscht alle Personen, Einrichtungen, Kinder und Zeiten sowie die Spracheinstellung auf diesem Gerät. Danach startest du wieder mit dem Startplan. Bereits geteilte Links funktionieren weiter. Das lässt sich nicht rückgängig machen.',
+      resetGo: 'Ja, alles löschen', resetDone: 'Alles gelöscht.',
       gapLineKid: (s, e, k) => `${s}–${e} Uhr: niemand für ${k} da`
     },
     en: {
@@ -452,6 +475,17 @@ details[open] summary { margin-bottom: 8px; }
       kidHelp: 'Parents count for all children. For kindergartens, schools and other people you choose which children they cover when adding them, or by clicking the block.',
       forKids: 'Which children?', allKids: 'All children', kidsNone: 'No children added yet – applies to all.', kidsMixed: 'These times currently cover different children. A change here applies to all times.', addKidShort: '+ Child', needKid: 'Please choose at least one child.',
       viewLabel: 'View',
+      ics: 'Calendar', icsTip: 'Export to calendar (.ics)', icsTitle: 'Export to calendar',
+      icsSub: 'Downloads an .ics file you can import into Apple, Google or Outlook Calendar.',
+      icsWho: 'Whose times?', icsAll: 'All', icsWeek: 'Which week?', wkThis: 'This week', wkNext: 'Next week', wkPick: 'Other week',
+      wkDate: 'Any day in that week', icsGo: 'Download .ics', icsNeedP: 'Please choose at least one person or place.',
+      icsNone: 'No times are entered for this selection.', icsDone: n => `${n} ${n === 1 ? 'event' : 'events'} exported.`,
+      icsHere: '.ics downloads are not possible here in claude.ai. Open the plan in the GitHub version and export it there.', icsOpenGh: 'Open GitHub version',
+      evWork: n => `${n}: work`, evHo: n => `${n}: working from home`, evCare: n => `${n} looks after the children`,
+      evBring: n => `Drop-off: ${n}`, evPick: n => `Pick-up: ${n}`, evKids: 'Children', openV: 'open',
+      footNote: 'Your plan is only stored in this browser.', reset: 'Delete everything',
+      resetQ: 'Delete everything?', resetTxt: 'Deletes all people, places, children and times, plus the language setting, on this device. You then start again with the starter plan. Links you already shared keep working. This cannot be undone.',
+      resetGo: 'Yes, delete everything', resetDone: 'Everything deleted.',
       gapLineKid: (s, e, k) => `${s}–${e}: nobody for ${k}`
     }
   };
@@ -467,6 +501,7 @@ details[open] summary { margin-bottom: 8px; }
     document.documentElement.lang = lang;
     document.title = t('title');
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    const ib = document.getElementById('icsBtn'); if (ib) { ib.title = t('icsTip'); ib.setAttribute('aria-label', t('icsTip')); }
     document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
   }
   function setLang(l) {
@@ -1078,6 +1113,112 @@ details[open] summary { margin-bottom: 8px; }
       });
   }
 
+  // ---------- Kalender-Export (.ics) ----------
+  const GH_URL = 'https://alexanderhaberzettl.github.io/Unsere-Betreuungswoche/';
+  const mondayOf = dt => { const d = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d; };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const ymd = d => d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  const isoInput = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const isoWeek = d => { const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); x.setUTCDate(x.getUTCDate() + 4 - (x.getUTCDay() || 7)); const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1)); return [x.getUTCFullYear(), Math.ceil(((x - y0) / 864e5 + 1) / 7)]; };
+  const wkRange = mon => { const fr = addDays(mon, 4), o = { day: 'numeric', month: 'short' }; return `${mon.toLocaleDateString(t('locale'), o)} – ${fr.toLocaleDateString(t('locale'), o)}`; };
+  const icsEsc = v => String(v).replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  function icsFold(line) {
+    const out = []; let cur = '', len = 0;
+    for (const ch of line) {
+      const n = new TextEncoder().encode(ch).length;
+      if (len + n > (out.length ? 74 : 75)) { out.push(cur); cur = ''; len = 0; }
+      cur += ch; len += n;
+    }
+    out.push(cur);
+    return out.join('\r\n ');
+  }
+  function buildIcs(people, mon) {
+    const hm = m => String(Math.floor(m / 60)).padStart(2, '0') + String(m % 60).padStart(2, '0') + '00';
+    const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    const [wy, wn] = isoWeek(mon);
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Unsere Betreuungswoche//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+      'X-WR-CALNAME:' + icsEsc(`${t('title')} ${wy}-W${String(wn).padStart(2, '0')}`)];
+    let n = 0;
+    people.forEach(p => p.blocks.slice().sort((a, b) => a.d - b.d || a.s - b.s).forEach(b => {
+      const day = ymd(addDays(mon, b.d));
+      const kn = multiKids() && b.kids && b.kids.length ? ` (${kidNames(b.kids)})` : '';
+      let sum, desc = [];
+      if (p.type === 'eltern') sum = b.ho ? t('evHo', p.name) : t('evWork', p.name);
+      else if (p.type === 'kita') { sum = p.name + kn; desc = [t('evBring', b.bring || t('openV')), t('evPick', b.pick || t('openV'))]; }
+      else sum = t('evCare', p.name) + kn;
+      L.push('BEGIN:VEVENT', `UID:${day}-${hm(b.s)}-${p.id}-${n}@betreuungswoche`, 'DTSTAMP:' + now,
+        `DTSTART:${day}T${hm(b.s)}`, `DTEND:${day}T${hm(b.e)}`, 'SUMMARY:' + icsEsc(sum),
+        ...(desc.length ? ['DESCRIPTION:' + icsEsc(desc.join('\n'))] : []), 'TRANSP:' + (p.type === 'eltern' ? 'OPAQUE' : 'TRANSPARENT'), 'END:VEVENT');
+      n++;
+    }));
+    L.push('END:VCALENDAR');
+    return { text: L.map(icsFold).join('\r\n') + '\r\n', n, name: `betreuungswoche-${wy}-W${String(wn).padStart(2, '0')}.ics` };
+  }
+  function icsDlg() {
+    if (!state.people.length) { toast(t('addToSee')); return; }
+    const thisMon = mondayOf(new Date()), nextMon = addDays(thisMon, 7);
+    const inClaude = !!SHARE_BASE;
+    openDlg(`
+      <h3>${t('icsTitle')}</h3>
+      <p class="sub">${t('icsSub')}</p>
+      <div class="field">${t('icsWho')}<div class="seg">${state.people.map(p => `<label><input type="checkbox" name="f-ip" value="${p.id}" checked><span>${esc(p.name)}</span></label>`).join('')}</div></div>
+      <div class="field">${t('icsWeek')}<div class="seg">
+        <label><input type="radio" name="f-wk" value="this" checked><span>${t('wkThis')} · ${wkRange(thisMon)}</span></label>
+        <label><input type="radio" name="f-wk" value="next"><span>${t('wkNext')} · ${wkRange(nextMon)}</span></label>
+        <label><input type="radio" name="f-wk" value="pick"><span>${t('wkPick')}</span></label></div>
+        <label class="field wkdate" id="f-wkd-wrap" hidden>${t('wkDate')}<input type="date" id="f-wkd" value="${isoInput(addDays(nextMon, 7))}"><span class="wkr" id="f-wkr"></span></label></div>
+      ${inClaude ? `<p class="dlg-note">${t('icsHere')}</p>` : ''}
+      <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="f-cancel">${t('cancel')}</button>
+        <button type="button" class="btn primary" id="f-save">${inClaude ? t('icsOpenGh') : t('icsGo')}</button></div>`,
+      b => {
+        const wkd = b.querySelector('#f-wkd');
+        const pickMon = () => { const v = wkd.value; if (!v) return null; const [y, m, d] = v.split('-').map(Number); return mondayOf(new Date(y, m - 1, d)); };
+        const sync = () => {
+          b.querySelector('#f-wkd-wrap').hidden = b.querySelector('[name=f-wk]:checked').value !== 'pick';
+          const pm = pickMon(); b.querySelector('#f-wkr').textContent = pm ? wkRange(pm) : '';
+        };
+        b.querySelectorAll('[name=f-wk]').forEach(r => r.addEventListener('change', sync)); wkd.addEventListener('input', sync); sync();
+        b.querySelector('#f-cancel').onclick = close;
+        b.querySelector('#f-save').onclick = async () => {
+          if (inClaude) {
+            try { const code = await encodePlan(state); window.open(GH_URL + '#' + code, '_blank', 'noopener'); } catch { toast(t('linkFail')); }
+            return;
+          }
+          const ids = [...b.querySelectorAll('[name=f-ip]:checked')].map(x => x.value);
+          if (!ids.length) { toast(t('icsNeedP')); return; }
+          const wk = b.querySelector('[name=f-wk]:checked').value;
+          const mon = wk === 'this' ? thisMon : wk === 'next' ? nextMon : pickMon();
+          if (!mon) { wkd.focus(); return; }
+          const res = buildIcs(state.people.filter(p => ids.includes(p.id)), mon);
+          if (!res.n) { toast(t('icsNone')); return; }
+          const url = URL.createObjectURL(new Blob([res.text], { type: 'text/calendar;charset=utf-8' }));
+          const a = document.createElement('a'); a.href = url; a.download = res.name;
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+          close(); toast(t('icsDone', res.n));
+        };
+      });
+  }
+
+  // ---------- Alles löschen ----------
+  function resetDlg() {
+    openDlg(`
+      <h3>${t('resetQ')}</h3>
+      <p class="sub">${t('resetTxt')}</p>
+      <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="f-cancel">${t('cancel')}</button>
+        <button type="button" class="btn primary danger-fill" id="f-save">${t('resetGo')}</button></div>`,
+      b => {
+        b.querySelector('#f-cancel').onclick = close;
+        b.querySelector('#f-save').onclick = () => {
+          try { localStorage.removeItem(KEY); localStorage.removeItem(LANG_KEY); } catch {}
+          lang = detectLang(); applyStatic();
+          shared = null; active = null; viewKid = null;
+          state = fixState(example());
+          clearHash(); close(); render(); toast(t('resetDone'));
+        };
+      });
+  }
+
   function openShared(st) {
     const own = loadOwn();
     if (!own || !own.people || !own.people.length || own.example) {
@@ -1093,6 +1234,8 @@ details[open] summary { margin-bottom: 8px; }
   document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
   $('#addBtn').onclick = () => addDlg();
   $('#shareBtn').onclick = () => shareDlg().catch(() => toast(t('linkFail')));
+  $('#icsBtn').onclick = icsDlg;
+  $('#resetBtn').onclick = resetDlg;
   $('#banner').addEventListener('click', e => {
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'adopt') { shared = null; state.example = false; save(); clearHash(); render(); toast(t('adopted')); }

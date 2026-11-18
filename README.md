@@ -16,6 +16,8 @@ Ein einfacher Wochenplan (Montag bis Freitag, 7 bis 18 Uhr), mit dem Familien au
 - **Lücken und Hinweise:** Zeiten ohne Betreuung werden rot markiert. Die App warnt, wenn die Person zum Bringen oder Abholen zu der Zeit arbeitet oder nicht eingeplant ist.
 - **Mehrere Kinder:** Kinder anlegen und bei jeder Zeit einer Einrichtung oder weiteren Person auswählen, für welches Kind sie gilt (z. B. Anna bis 12:00, Ben bis 15:00 im selben Kindergarten). Über den Stift lässt sich eine Einrichtung auch als Ganzes einem Kind zuordnen. Lücken werden pro Kind angezeigt, im Kalender lässt sich nach Kind filtern.
 - **Plan teilen:** Ein Klick erzeugt einen Link, der den ganzen Plan enthält.
+- **Kalender-Export (.ics):** Zeiten ausgewählter Personen und Einrichtungen für diese, nächste oder eine beliebige Woche als .ics-Datei herunterladen und in Apple-, Google- oder Outlook-Kalender importieren.
+- **Alles löschen:** Unten auf der Seite lassen sich Plan und Einstellungen auf dem Gerät vollständig löschen.
 - **Deutsch und Englisch:** Die App folgt der Sprache deines Geräts. Mit dem Schalter DE/EN oben rechts lässt sie sich umstellen; die Wahl wird gemerkt.
 
 ## Datenschutz
@@ -49,6 +51,8 @@ A simple weekly planner (Monday to Friday, 7 am to 6 pm) that lets families see 
 - **Gaps and warnings:** times without anyone available are marked red. The app warns when the person doing drop-off or pick-up is working at that time or isn't scheduled.
 - **Multiple children:** add children and choose for each time at a kindergarten, school or with another person which child it is for (e.g. Anna until 12:00, Ben until 15:00 at the same kindergarten). The pencil icon on a kindergarten or school also assigns all its times to a child at once. Gaps are shown per child, and the calendar can be filtered by child.
 - **Share a plan:** one click creates a link that contains the entire plan.
+- **Calendar export (.ics):** download the times of selected people and places for this week, next week or any week as an .ics file and import it into Apple, Google or Outlook Calendar.
+- **Delete everything:** at the bottom of the page you can fully delete the plan and settings on your device.
 
 ## Privacy
 
