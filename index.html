@@ -73,6 +73,17 @@ button { cursor: pointer; }
 .lang button { border: 0; background: none; padding: 5px 11px; font-weight: 600; font-size: 13px; color: var(--muted); letter-spacing: .03em; }
 .lang button:hover { color: var(--ink); }
 .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.viewseg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--surface); margin: 0 0 12px 4px; }
+.viewseg button { border: 0; background: none; padding: 6px 12px; font-weight: 600; font-size: 13.5px; color: var(--muted); }
+.viewseg button:hover { color: var(--ink); }
+.viewseg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.kids-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.kids-row h2 { margin-right: 4px; }
+.kidchip { display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); padding: 6px 12px 6px 14px; font-weight: 600; }
+.kidchip:hover { border-color: var(--muted); }
+.kidchip svg { color: var(--muted); }
+.kids-row .chip-add { border-radius: 999px; padding: 6px 14px; }
+.gaplbl { position: absolute; right: 4px; z-index: 2; font-size: 11px; font-weight: 600; line-height: 1.3; color: var(--gap); background: var(--surface); padding: 1px 5px; border-radius: 4px; pointer-events: none; white-space: nowrap; max-width: calc(100% - 8px); overflow: hidden; text-overflow: ellipsis; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; font-weight: 600; font-size: 14px; }
 .btn:hover { border-color: var(--muted); }
@@ -227,6 +238,8 @@ details[open] summary { margin-bottom: 8px; }
   <div class="banner" id="banner" hidden></div>
   <section class="status" id="status" aria-live="polite"></section>
 
+  <section class="kids-row" id="kidsRow"></section>
+
   <section>
     <div class="sec-head">
       <h2 data-i18n="whoCares"></h2>
@@ -236,6 +249,7 @@ details[open] summary { margin-bottom: 8px; }
   </section>
 
   <section class="calendar">
+    <div class="viewseg" id="kidview" role="group" hidden></div>
     <div class="cal-scroll"><div class="cal" id="cal"></div></div>
     <div class="legend">
       <span><i class="sw work"></i><span data-i18n="lgWork"></span></span>
@@ -332,7 +346,14 @@ details[open] summary { margin-bottom: 8px; }
       codePaste: 'Erhaltenen Plan-Code oder Link einfügen', openPlan: 'Plan öffnen', closeB: 'Schließen',
       badCode: 'Das ist kein gültiger Plan-Code.', sharedLoaded: 'Geteilter Plan geladen.',
       linkFail: 'Link konnte nicht erstellt werden.', adopted: 'Plan übernommen und gespeichert.',
-      brokenLink: 'Der geteilte Link ist unvollständig oder beschädigt.'
+      brokenLink: 'Der geteilte Link ist unvollständig oder beschädigt.',
+      kids: 'Kinder', addKid: '+ Kind hinzufügen',
+      kidHint: 'Mehrere Kinder? Lege sie hier an und wähle bei Kita und Betreuung, für wen sie gelten.',
+      dlgAddKid: 'Kind hinzufügen', kidNamePh: 'z. B. Anna',
+      kidHelp: 'Elternteile gelten für alle Kinder. Bei Kindergarten und Betreuung wählst du, für welche Kinder sie da sind.',
+      forKids: 'Für welche Kinder?', allKids: 'Alle Kinder', needKid: 'Bitte mindestens ein Kind wählen.',
+      viewLabel: 'Ansicht',
+      gapLineKid: (s, e, k) => `${s}–${e} Uhr: niemand für ${k} da`
     },
     en: {
       locale: 'en-GB',
@@ -404,7 +425,14 @@ details[open] summary { margin-bottom: 8px; }
       codePaste: 'Paste a plan code or link you received', openPlan: 'Open plan', closeB: 'Close',
       badCode: 'That is not a valid plan code.', sharedLoaded: 'Shared plan loaded.',
       linkFail: 'Could not create the link.', adopted: 'Plan saved as yours.',
-      brokenLink: 'The shared link is incomplete or damaged.'
+      brokenLink: 'The shared link is incomplete or damaged.',
+      kids: 'Children', addKid: '+ Add child',
+      kidHint: 'More than one child? Add them here, then choose for kindergarten and caregivers which children they cover.',
+      dlgAddKid: 'Add child', kidNamePh: 'e.g. Anna',
+      kidHelp: 'Parents count for all children. For kindergarten and caregivers you choose which children they look after.',
+      forKids: 'Which children?', allKids: 'All children', needKid: 'Please choose at least one child.',
+      viewLabel: 'View',
+      gapLineKid: (s, e, k) => `${s}–${e}: nobody for ${k}`
     }
   };
   function detectLang() {
@@ -429,7 +457,7 @@ details[open] summary { margin-bottom: 8px; }
     applyStatic(); render();
   }
 
-  let state, shared = null, active = null, drag = null, resize = null, suppressClick = false, lastPointer = 'mouse';
+  let state, shared = null, active = null, viewKid = null, drag = null, resize = null, suppressClick = false, lastPointer = 'mouse';
 
   const uid = () => Math.random().toString(36).slice(2, 9);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -439,6 +467,17 @@ details[open] summary { margin-bottom: 8px; }
   const snap = m => Math.min(END, Math.max(START, Math.round(m / STEP) * STEP));
   const fmtH = x => x.toLocaleString(t('locale'), { maximumFractionDigits: 2 });
   const hourPx = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hour')) || 48;
+  const kidsOf = () => (state.children && state.children.length) ? state.children : [{ id: '_', name: '' }];
+  const multiKids = () => (state.children || []).length > 1;
+  const forKid = (p, k) => p.type === 'eltern' || !p.kids || !p.kids.length || p.kids.includes(k);
+  const shownPeople = () => state.people.filter(p => !viewKid || forKid(p, viewKid));
+  function fixState(st) {
+    if (!st.children) st.children = [];
+    const ids = st.children.map(k => k.id);
+    st.people.forEach(p => { if (p.kids) { p.kids = p.kids.filter(id => ids.includes(id)); if (!p.kids.length || p.type === 'eltern') delete p.kids; } });
+    if (viewKid && !ids.includes(viewKid)) viewKid = null;
+    return st;
+  }
   const byName = n => state.people.find(p => p.name.trim().toLowerCase() === String(n || '').trim().toLowerCase());
 
   // ---------- Beispiel ----------
@@ -446,6 +485,7 @@ details[open] summary { margin-bottom: 8px; }
     const wk = (days, s, e, extra = {}) => days.map(d => ({ d, s, e, ...extra }));
     return {
       example: true,
+      children: [],
       people: [
         { id: uid(), name: t('kitaName'), type: 'kita', color: 3, blocks: wk([0, 1, 2, 3, 4], 510, 720, { bring: '', pick: '' }) }
       ]
@@ -461,6 +501,7 @@ details[open] summary { margin-bottom: 8px; }
   function changed() {
     if (state.example) { state.example = false; }
     state.people.forEach(normalize);
+    fixState(state);
     save(); render();
   }
 
@@ -481,13 +522,14 @@ details[open] summary { margin-bottom: 8px; }
 
   // ---------- Berechnung ----------
   const overlaps = (b, d, s, e) => b.d === d && b.s < e && b.e > s;
-  function coverage() {
+  function coverage(kid) {
     const n = (END - START) / STEP;
+    const ppl = state.people.filter(p => forKid(p, kid));
     return [0, 1, 2, 3, 4].map(d => {
       const arr = [];
       for (let i = 0; i < n; i++) {
         const t0 = START + i * STEP, t2 = t0 + STEP;
-        arr.push(state.people.some(p => p.type === 'eltern'
+        arr.push(ppl.some(p => p.type === 'eltern'
           ? !p.blocks.some(b => overlaps(b, d, t0, t2))
           : p.blocks.some(b => overlaps(b, d, t0, t2))));
       }
@@ -517,16 +559,32 @@ details[open] summary { margin-bottom: 8px; }
     return null;
   }
   function analyse() {
-    const cov = coverage();
+    const kids = kidsOf();
+    const vis = kids.filter(k => !viewKid || k.id === viewKid);
+    const covK = vis.map(k => coverage(k.id));
+    const nS = (END - START) / STEP;
     const gaps = [];
-    cov.forEach((arr, d) => runs(arr, false).forEach(([s, e]) => gaps.push({ d, s, e })));
+    vis.forEach((k, ki) => covK[ki].forEach((arr, d) => runs(arr, false).forEach(([s, e]) => gaps.push({ d, s, e, k }))));
+    gaps.sort((x, y) => x.d - y.d || x.s - y.s);
+    const cov = [0, 1, 2, 3, 4].map(d => Array.from({ length: nS }, (_, i) => covK.every(c => c[d][i])));
+    const bands = [0, 1, 2, 3, 4].map(d => {
+      const out = []; let cur = null;
+      for (let i = 0; i < nS; i++) {
+        const miss = vis.filter((k, ki) => !covK[ki][d][i]);
+        const key = miss.map(k => k.id).join(','), t0 = START + i * STEP;
+        if (cur && cur.key === key) cur.e = t0 + STEP;
+        else { if (cur && cur.key) out.push(cur); cur = { key, s: t0, e: t0 + STEP, names: miss.map(k => k.name) }; }
+      }
+      if (cur && cur.key) out.push(cur);
+      return out;
+    });
     const warns = [];
     state.people.filter(p => p.type === 'kita').forEach(k => k.blocks.forEach(b => {
       const w1 = checkPerson(b.bring, b.d, b.s, 'bring'); if (w1) warns.push(w1);
       const w2 = checkPerson(b.pick, b.d, b.e, 'pick'); if (w2) warns.push(w2);
     }));
     const hours = state.people.filter(p => p.type === 'eltern' && p.hours > 0).map(p => ({ p, ist: hoursOf(p) }));
-    return { cov, gaps, warns, hours };
+    return { cov, gaps, bands, warns, hours };
   }
 
   // ---------- Darstellung ----------
@@ -534,6 +592,7 @@ details[open] summary { margin-bottom: 8px; }
     const a = analyse();
     renderBanner();
     renderStatus(a);
+    renderKids();
     renderChips();
     renderCal(a);
     renderSummary(a);
@@ -568,6 +627,19 @@ details[open] summary { margin-bottom: 8px; }
     $('#status').innerHTML = parts.join('');
   }
 
+  function renderKids() {
+    const kids = state.children || [];
+    $('#kidsRow').innerHTML = `<h2>${t('kids')}</h2>`
+      + kids.map(k => `<button type="button" class="kidchip" data-kid="${k.id}" aria-label="${esc(t('editP', k.name))}">${esc(k.name)}${pencil}</button>`).join('')
+      + `<button type="button" class="chip-add" id="addKid">${t('addKid')}</button>`
+      + (kids.length < 2 ? `<span class="hint">${t('kidHint')}</span>` : '');
+    const kv = $('#kidview');
+    kv.hidden = kids.length < 2;
+    kv.setAttribute('aria-label', t('viewLabel'));
+    kv.innerHTML = kids.length < 2 ? '' : [{ id: '', name: t('allKids') }, ...kids]
+      .map(k => `<button type="button" data-view="${k.id}" aria-pressed="${(viewKid || '') === k.id}">${esc(k.name)}</button>`).join('');
+  }
+
   const pencil = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
   function renderChips() {
     const html = state.people.map(p => {
@@ -578,6 +650,8 @@ details[open] summary { margin-bottom: 8px; }
           const ok = Math.abs(ist - p.hours) < .01;
           sub += ` · <span class="${ok ? 'ok' : 'warn'}">${fmtH(ist)} / ${fmtH(p.hours)} h</span>`;
         } else sub += ` · ${t('hWork', fmtH(ist))}`;
+      } else if (multiKids() && p.kids && p.kids.length) {
+        sub += ' · ' + esc(state.children.filter(k => p.kids.includes(k.id)).map(k => k.name).join(', '));
       }
       return `<div class="chip ${p.type} ${active === p.id ? 'active' : ''}" style="--c:var(--p${p.color})">
         <button type="button" class="chip-main" data-sel="${p.id}" aria-pressed="${active === p.id}">
@@ -595,11 +669,12 @@ details[open] summary { margin-bottom: 8px; }
 
   function renderCal(a) {
     const H = hourPx(), px = m => (m - START) / 60 * H;
-    const n = Math.max(1, state.people.length);
+    const ppl = shownPeople();
+    const n = Math.max(1, ppl.length);
     const DAYL = t('daysL');
     $('#cal').style.setProperty('--lanes', n);
     let h = `<div class="corner"></div>` + DAYL.map((name, d) => {
-      const bad = a.gaps.some(g => g.d === d);
+      const bad = a.bands[d].length > 0;
       return `<div class="dayhead"><span class="dd ${bad ? 'no' : ''}" title="${bad ? t('gapT') : t('coveredT')}"></span>${name}</div>`;
     }).join('');
     let times = '';
@@ -607,11 +682,15 @@ details[open] summary { margin-bottom: 8px; }
     h += `<div class="times">${times}</div>`;
     [0, 1, 2, 3, 4].forEach(d => {
       let body = '';
-      a.gaps.filter(g => g.d === d).forEach(g => body += `<div class="gapband" style="top:${px(g.s)}px;height:${px(g.e) - px(g.s)}px"></div>`);
+      let labels = '';
+      a.bands[d].forEach(g => {
+        body += `<div class="gapband" style="top:${px(g.s)}px;height:${px(g.e) - px(g.s)}px"></div>`;
+        if (multiKids() && !viewKid && px(g.e) - px(g.s) >= 16) labels += `<div class="gaplbl" style="top:${px(g.s) + 2}px">${esc(g.names.join(', '))}</div>`;
+      });
       body += `<div class="strip">` + runs(a.cov[d], true).map(([s, e]) => `<i style="top:${px(s)}px;height:${px(e) - px(s)}px"></i>`).join('')
         + runs(a.cov[d], false).map(([s, e]) => `<i class="no" style="top:${px(s)}px;height:${px(e) - px(s)}px"></i>`).join('') + `</div>`;
       let lanes = '';
-      state.people.forEach((p, li) => {
+      ppl.forEach((p, li) => {
         const pos = `left:calc(${li} * 100% / ${n});width:calc(100% / ${n} - 3px)`;
         if (p.id === active) lanes += `<div class="lanebg" style="--c:var(--p${p.color});${pos}"></div>`;
         p.blocks.forEach((b, i) => {
@@ -631,7 +710,7 @@ details[open] summary { margin-bottom: 8px; }
             style="--c:var(--p${p.color});${pos};top:${px(b.s)}px;height:${hgt}px">${inner}<span class="hdl top" title="${t('moveStart')}"></span><span class="hdl bot" title="${t('moveEnd')}"></span></button>`;
         });
       });
-      body += `<div class="lanes">${lanes}</div>`;
+      body += `<div class="lanes">${lanes}</div>` + labels;
       h += `<div class="daybody" data-d="${d}">${body}</div>`;
     });
     $('#cal').innerHTML = h;
@@ -640,7 +719,7 @@ details[open] summary { margin-bottom: 8px; }
   function renderSummary(a) {
     const DAYS = t('days');
     const gaps = a.gaps.length
-      ? `<ul>${a.gaps.map(g => `<li><span class="m gap"></span><b>${DAYS[g.d]}</b><span>${t('gapLine', fmt(g.s), fmt(g.e))}</span></li>`).join('')}</ul>`
+      ? `<ul>${a.gaps.map(g => `<li><span class="m gap"></span><b>${DAYS[g.d]}</b><span>${multiKids() ? t('gapLineKid', fmt(g.s), fmt(g.e), esc(g.k.name)) : t('gapLine', fmt(g.s), fmt(g.e))}</span></li>`).join('')}</ul>`
       : `<p class="empty">${state.people.length ? t('noGaps') : t('addToSee')}</p>`;
     const warns = a.warns.length
       ? `<ul>${a.warns.map(w => `<li><span class="m warn"></span><span>${esc(w)}</span></li>`).join('')}</ul>`
@@ -683,6 +762,7 @@ details[open] summary { margin-bottom: 8px; }
       <label class="field">${t('name')}<input id="f-name" value="${esc(p.name)}" placeholder="${esc(t('namePh'))}" autocomplete="off"></label>
       <div class="field">${t('role')}<div class="seg">${Object.entries(t('types')).map(([k, v]) => `<label><input type="radio" name="f-type" value="${k}" ${p.type === k ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div></div>
       <p class="helptext" id="f-help"></p>
+      ${multiKids() ? `<div class="field" id="f-kids-wrap">${t('forKids')}<div class="seg">${state.children.map(k => `<label><input type="checkbox" name="f-kid" value="${k.id}" ${!p.kids || !p.kids.length || p.kids.includes(k.id) ? 'checked' : ''}><span>${esc(k.name)}</span></label>`).join('')}</div></div>` : ''}
       <label class="field" id="f-hours-wrap">${t('hoursPerWeek')}<input id="f-hours" type="number" min="0" max="60" step="0.5" value="${p.hours || ''}" placeholder="${esc(t('hoursPh'))}"></label>
       <div class="field">${t('color')}<div class="colors">${[0, 1, 2, 3, 4, 5].map(c => `<label style="--c:var(--p${c})"><input type="radio" name="f-color" value="${c}" ${p.color === c ? 'checked' : ''} aria-label="${t('colorN', c + 1)}"><span></span></label>`).join('')}</div></div>
       <div class="dlg-foot">${isNew ? '' : `<button type="button" class="btn danger" id="f-del">${t('del')}</button>`}<span class="spacer"></span>
@@ -692,6 +772,7 @@ details[open] summary { margin-bottom: 8px; }
           const ty = b.querySelector('[name=f-type]:checked').value;
           b.querySelector('#f-help').textContent = help[ty];
           b.querySelector('#f-hours-wrap').hidden = ty !== 'eltern';
+          const kw = b.querySelector('#f-kids-wrap'); if (kw) kw.hidden = ty === 'eltern';
         };
         b.querySelectorAll('[name=f-type]').forEach(r => r.addEventListener('change', sync)); sync();
         b.querySelector('#f-cancel').onclick = close;
@@ -706,17 +787,49 @@ details[open] summary { margin-bottom: 8px; }
           const type = b.querySelector('[name=f-type]:checked').value;
           const hours = parseFloat(b.querySelector('#f-hours').value) || 0;
           const color = +b.querySelector('[name=f-color]:checked').value;
+          let kids;
+          if (b.querySelector('#f-kids-wrap') && type !== 'eltern') {
+            const sel = [...b.querySelectorAll('[name=f-kid]:checked')].map(x => x.value);
+            if (!sel.length) { toast(t('needKid')); return; }
+            if (sel.length < state.children.length) kids = sel;
+          }
           if (isNew) {
-            const np = { id: uid(), name, type, hours: type === 'eltern' ? hours : 0, color, blocks: [] };
+            const np = { id: uid(), name, type, hours: type === 'eltern' ? hours : 0, color, blocks: [], ...(kids ? { kids } : {}) };
             state.people.push(np); active = np.id;
           } else {
             if (p.name !== name) state.people.forEach(k => k.type === 'kita' && k.blocks.forEach(bl => {
               if (bl.bring === p.name) bl.bring = name; if (bl.pick === p.name) bl.pick = name;
             }));
             Object.assign(p, { name, type, hours: type === 'eltern' ? hours : 0, color });
+            if (kids) p.kids = kids; else delete p.kids;
           }
           close(); changed();
           if (isNew) toast(t('added', name));
+        };
+        b.querySelector('#f-save').onclick = doSave;
+        b.querySelector('#f-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSave(); } });
+      });
+  }
+
+  function kidDlg(k) {
+    const isNew = !k;
+    openDlg(`
+      <h3>${isNew ? t('dlgAddKid') : esc(t('editP', k.name))}</h3>
+      <label class="field">${t('name')}<input id="f-name" value="${esc(k ? k.name : '')}" placeholder="${esc(t('kidNamePh'))}" autocomplete="off"></label>
+      <p class="helptext">${t('kidHelp')}</p>
+      <div class="dlg-foot">${isNew ? '' : `<button type="button" class="btn danger" id="f-del">${t('del')}</button>`}<span class="spacer"></span>
+        <button type="button" class="btn" id="f-cancel">${t('cancel')}</button><button type="button" class="btn primary" id="f-save">${isNew ? t('add') : t('save')}</button></div>`,
+      b => {
+        b.querySelector('#f-cancel').onclick = close;
+        if (!isNew) twoStep(b.querySelector('#f-del'), t('reallyDel'), () => {
+          state.children = state.children.filter(x => x.id !== k.id);
+          close(); changed();
+        });
+        const doSave = () => {
+          const name = b.querySelector('#f-name').value.trim();
+          if (!name) { b.querySelector('#f-name').focus(); toast(t('needName')); return; }
+          if (isNew) state.children.push({ id: uid(), name }); else k.name = name;
+          close(); changed();
         };
         b.querySelector('#f-save').onclick = doSave;
         b.querySelector('#f-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSave(); } });
@@ -818,12 +931,22 @@ details[open] summary { margin-bottom: 8px; }
     return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new T('deflate-raw'))).arrayBuffer());
   }
   function pack(st) {
-    return st.people.map(p => [p.name, p.type[0], p.hours || 0, p.color,
-      p.blocks.map(b => { const a = [b.d, (b.s - START) / STEP, (b.e - START) / STEP]; if (p.type === 'kita') a.push(b.bring || '', b.pick || ''); else if (b.ho) a.push(1); return a; })]);
+    const kids = st.children || [];
+    const people = st.people.map(p => {
+      const row = [p.name, p.type[0], p.hours || 0, p.color,
+        p.blocks.map(b => { const a = [b.d, (b.s - START) / STEP, (b.e - START) / STEP]; if (p.type === 'kita') a.push(b.bring || '', b.pick || ''); else if (b.ho) a.push(1); return a; })];
+      if (p.kids && p.kids.length) row.push(p.kids.map(id => kids.findIndex(k => k.id === id)).filter(i => i >= 0));
+      return row;
+    });
+    return kids.length ? ['v2', people, kids.map(k => k.name)] : people;
   }
-  function unpack(arr) {
+  function unpack(data) {
     const T = { e: 'eltern', b: 'betreuung', k: 'kita' };
-    return { people: arr.map(([name, ty, hours, color, bl]) => ({
+    const v2 = Array.isArray(data) && data[0] === 'v2';
+    const arr = v2 ? data[1] : data;
+    const children = v2 ? data[2].map(name => ({ id: uid(), name: String(name) })) : [];
+    return { children, people: arr.map(([name, ty, hours, color, bl, kx]) => ({
+      ...(Array.isArray(kx) && kx.length ? { kids: kx.map(i => children[i] && children[i].id).filter(Boolean) } : {}),
       id: uid(), name: String(name), type: T[ty] || 'betreuung', hours: +hours || 0, color: (+color || 0) % 6,
       blocks: bl.map(([d, s, e, x, y]) => ({ d: +d, s: START + s * STEP, e: START + e * STEP,
         ...(T[ty] === 'kita' ? { bring: x || '', pick: y || '' } : {}), ...(T[ty] === 'eltern' && x ? { ho: true } : {}) }))
@@ -843,7 +966,7 @@ details[open] summary { margin-bottom: 8px; }
     if (m[1] === 'z') bytes = await streamBytes(bytes, DecompressionStream);
     const st = unpack(JSON.parse(new TextDecoder().decode(bytes)));
     st.people.forEach(normalize);
-    return st;
+    return fixState(st);
   }
   function baseUrl() { return SHARE_BASE || location.href.split('#')[0]; }
 
@@ -895,14 +1018,29 @@ details[open] summary { margin-bottom: 8px; }
   $('#banner').addEventListener('click', e => {
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'adopt') { shared = null; state.example = false; save(); clearHash(); render(); toast(t('adopted')); }
-    if (act === 'mine') { shared = null; state = loadOwn() || example(); clearHash(); render(); }
-    if (act === 'clear') { state = { people: [] }; active = null; save(); render(); personDlg(); }
+    if (act === 'mine') { shared = null; state = fixState(loadOwn() || example()); clearHash(); render(); }
+    if (act === 'clear') { state = { people: [], children: [] }; viewKid = null; active = null; save(); render(); personDlg(); }
   });
   $('#chips').addEventListener('click', e => {
     const sel = e.target.closest('[data-sel]'), ed = e.target.closest('[data-edit]');
-    if (sel) { active = active === sel.dataset.sel ? null : sel.dataset.sel; render(); }
+    if (sel) {
+      active = active === sel.dataset.sel ? null : sel.dataset.sel;
+      const ap = state.people.find(p => p.id === active);
+      if (ap && viewKid && !forKid(ap, viewKid)) viewKid = null;
+      render();
+    }
     else if (ed) personDlg(state.people.find(p => p.id === ed.dataset.edit));
     else if (e.target.closest('#addPerson')) personDlg();
+  });
+
+  $('#kidsRow').addEventListener('click', e => {
+    const kc = e.target.closest('[data-kid]');
+    if (kc) kidDlg(state.children.find(k => k.id === kc.dataset.kid));
+    else if (e.target.closest('#addKid')) kidDlg();
+  });
+  $('#kidview').addEventListener('click', e => {
+    const b = e.target.closest('[data-view]'); if (!b) return;
+    viewKid = b.dataset.view || null; render();
   });
 
   const cal = $('#cal');
@@ -927,7 +1065,8 @@ details[open] summary { margin-bottom: 8px; }
     e.preventDefault();
     const m0 = minuteAt(bodyEl, e.clientY);
     const lanes = bodyEl.querySelector('.lanes');
-    const n = Math.max(1, state.people.length), li = state.people.indexOf(p);
+    const ppl = shownPeople(), n = Math.max(1, ppl.length), li = ppl.indexOf(p);
+    if (li < 0) { viewKid = null; render(); return; }
     const pv = document.createElement('div');
     pv.className = 'blk preview ' + p.type;
     pv.style.cssText = `--c:var(--p${p.color});left:calc(${li} * 100% / ${n});width:calc(100% / ${n} - 3px)`;
@@ -1001,6 +1140,7 @@ details[open] summary { margin-bottom: 8px; }
   applyStatic();
   state = loadOwn() || example();
   if (!state.people) state = example();
+  fixState(state);
   render();
   const h = location.hash.slice(1);
   if (/^p1[zr]/.test(h)) decodePlan(h).then(openShared).catch(() => toast(t('brokenLink')));
