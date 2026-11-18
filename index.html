@@ -118,6 +118,9 @@ button { cursor: pointer; }
 .chip-edit:hover { color: var(--ink); }
 .chip-add { border: 1.5px dashed var(--line); border-radius: 12px; background: transparent; padding: 8px 14px; font-weight: 600; color: var(--muted); }
 .chip-add:hover { color: var(--ink); border-color: var(--muted); }
+.chip-add.small { border-radius: 999px; padding: 6px 12px; font-size: 14px; }
+.kidsnone { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.kidsnone .helptext { margin: 0; }
 
 .calendar { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 12px 12px; }
 .cal-scroll { overflow-x: auto; }
@@ -349,10 +352,10 @@ details[open] summary { margin-bottom: 8px; }
       linkFail: 'Link konnte nicht erstellt werden.', adopted: 'Plan übernommen und gespeichert.',
       brokenLink: 'Der geteilte Link ist unvollständig oder beschädigt.',
       kids: 'Kinder', addKid: '+ Kind hinzufügen',
-      kidHint: 'Mehrere Kinder? Lege sie hier an. Beim Eintragen von Kita- und Betreuungszeiten wählst du dann, für welches Kind sie gelten.',
+      kidHint: 'Mehrere Kinder? Lege sie hier an. Für welches Kind eine Kita gilt, wählst du über den Stift an der Kita oder beim Eintragen der Zeiten.',
       dlgAddKid: 'Kind hinzufügen', kidNamePh: 'z. B. Anna',
       kidHelp: 'Elternteile gelten für alle Kinder. Bei Kita- und Betreuungszeiten wählst du beim Eintragen oder per Klick auf den Block, für welche Kinder sie gelten.',
-      forKids: 'Für welche Kinder?', allKids: 'Alle Kinder', needKid: 'Bitte mindestens ein Kind wählen.',
+      forKids: 'Für welche Kinder?', allKids: 'Alle Kinder', kidsNone: 'Noch keine Kinder angelegt – gilt für alle.', kidsMixed: 'Die Zeiten gelten gerade für unterschiedliche Kinder. Eine Änderung hier gilt für alle Zeiten.', addKidShort: '+ Kind', needKid: 'Bitte mindestens ein Kind wählen.',
       viewLabel: 'Ansicht',
       gapLineKid: (s, e, k) => `${s}–${e} Uhr: niemand für ${k} da`
     },
@@ -428,10 +431,10 @@ details[open] summary { margin-bottom: 8px; }
       linkFail: 'Could not create the link.', adopted: 'Plan saved as yours.',
       brokenLink: 'The shared link is incomplete or damaged.',
       kids: 'Children', addKid: '+ Add child',
-      kidHint: 'More than one child? Add them here. When you add kindergarten or caregiver times, you then choose which child they are for.',
+      kidHint: 'More than one child? Add them here. Choose which child a kindergarten is for via its pencil icon, or when adding times.',
       dlgAddKid: 'Add child', kidNamePh: 'e.g. Anna',
       kidHelp: 'Parents count for all children. For kindergarten and caregiver times you choose which children they cover when adding them, or by clicking the block.',
-      forKids: 'Which children?', allKids: 'All children', needKid: 'Please choose at least one child.',
+      forKids: 'Which children?', allKids: 'All children', kidsNone: 'No children added yet – applies to all.', kidsMixed: 'These times currently cover different children. A change here applies to all times.', addKidShort: '+ Child', needKid: 'Please choose at least one child.',
       viewLabel: 'View',
       gapLineKid: (s, e, k) => `${s}–${e}: nobody for ${k}`
     }
@@ -783,6 +786,7 @@ details[open] summary { margin-bottom: 8px; }
       <label class="field">${t('name')}<input id="f-name" value="${esc(p.name)}" placeholder="${esc(t('namePh'))}" autocomplete="off"></label>
       <div class="field">${t('role')}<div class="seg">${Object.entries(t('types')).map(([k, v]) => `<label><input type="radio" name="f-type" value="${k}" ${p.type === k ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div></div>
       <p class="helptext" id="f-help"></p>
+      ${isNew ? '' : kidsField(p.blocks.some(x => !x.kids) ? null : [...new Set(p.blocks.flatMap(x => x.kids))], { always: true, add: true, mixed: new Set(p.blocks.map(kidsKey)).size > 1 })}
       <label class="field" id="f-hours-wrap">${t('hoursPerWeek')}<input id="f-hours" type="number" min="0" max="60" step="0.5" value="${p.hours || ''}" placeholder="${esc(t('hoursPh'))}"></label>
       <div class="field">${t('color')}<div class="colors">${[0, 1, 2, 3, 4, 5].map(c => `<label style="--c:var(--p${c})"><input type="radio" name="f-color" value="${c}" ${p.color === c ? 'checked' : ''} aria-label="${t('colorN', c + 1)}"><span></span></label>`).join('')}</div></div>
       <div class="dlg-foot">${isNew ? '' : `<button type="button" class="btn danger" id="f-del">${t('del')}</button>`}<span class="spacer"></span>
@@ -792,7 +796,12 @@ details[open] summary { margin-bottom: 8px; }
           const ty = b.querySelector('[name=f-type]:checked').value;
           b.querySelector('#f-help').textContent = help[ty];
           b.querySelector('#f-hours-wrap').hidden = ty !== 'eltern';
+          const kw = b.querySelector('#f-kids-wrap'); if (kw) kw.hidden = ty === 'eltern';
         };
+        const kids0 = () => [...b.querySelectorAll('[name=f-kid]:checked')].map(x => x.value).sort().join(',');
+        const startKids = kids0();
+        const ak = b.querySelector('#f-addkid');
+        if (ak) ak.onclick = () => kidDlg(null, () => personDlg(p));
         b.querySelectorAll('[name=f-type]').forEach(r => r.addEventListener('change', sync)); sync();
         b.querySelector('#f-cancel').onclick = close;
         if (!isNew) twoStep(b.querySelector('#f-del'), t('reallyDel'), () => {
@@ -806,6 +815,10 @@ details[open] summary { margin-bottom: 8px; }
           const type = b.querySelector('[name=f-type]:checked').value;
           const hours = parseFloat(b.querySelector('#f-hours').value) || 0;
           const color = +b.querySelector('[name=f-color]:checked').value;
+          if (!isNew && type !== 'eltern' && kids0() !== startKids) {
+            const kids = readKids(b); if (kids === false) return;
+            p.blocks.forEach(x => { if (kids) x.kids = kids.slice(); else delete x.kids; });
+          }
           if (isNew) {
             const np = { id: uid(), name, type, hours: type === 'eltern' ? hours : 0, color, blocks: [] };
             state.people.push(np); active = np.id;
@@ -823,7 +836,7 @@ details[open] summary { margin-bottom: 8px; }
       });
   }
 
-  function kidDlg(k) {
+  function kidDlg(k, after) {
     const isNew = !k;
     openDlg(`
       <h3>${isNew ? t('dlgAddKid') : esc(t('editP', k.name))}</h3>
@@ -832,7 +845,7 @@ details[open] summary { margin-bottom: 8px; }
       <div class="dlg-foot">${isNew ? '' : `<button type="button" class="btn danger" id="f-del">${t('del')}</button>`}<span class="spacer"></span>
         <button type="button" class="btn" id="f-cancel">${t('cancel')}</button><button type="button" class="btn primary" id="f-save">${isNew ? t('add') : t('save')}</button></div>`,
       b => {
-        b.querySelector('#f-cancel').onclick = close;
+        b.querySelector('#f-cancel').onclick = () => { close(); if (after) after(); };
         if (!isNew) twoStep(b.querySelector('#f-del'), t('reallyDel'), () => {
           state.children = state.children.filter(x => x.id !== k.id);
           close(); changed();
@@ -842,6 +855,7 @@ details[open] summary { margin-bottom: 8px; }
           if (!name) { b.querySelector('#f-name').focus(); toast(t('needName')); return; }
           if (isNew) state.children.push({ id: uid(), name }); else k.name = name;
           close(); changed();
+          if (after) after();
         };
         b.querySelector('#f-save').onclick = doSave;
         b.querySelector('#f-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSave(); } });
@@ -855,10 +869,21 @@ details[open] summary { margin-bottom: 8px; }
       <label class="field">${t('from')}<input id="f-s" type="time" min="07:00" max="18:00" step="900" value="${toInput(s)}"></label>
       <label class="field">${t('to')}<input id="f-e" type="time" min="07:00" max="18:00" step="900" value="${toInput(e)}"></label></div>`;
   const hoField = on => `<label class="check" id="f-howrap"><input type="checkbox" id="f-ho" ${on ? 'checked' : ''}>${t('ho')}</label>`;
-  const kidsField = sel => !multiKids() ? '' : `<div class="field" id="f-kids-wrap">${t('forKids')}<div class="seg">${state.children.map(k => `<label><input type="checkbox" name="f-kid" value="${k.id}" ${!sel || !sel.length || sel.includes(k.id) ? 'checked' : ''}><span>${esc(k.name)}</span></label>`).join('')}</div></div>`;
+  const kidsField = (sel, opt = {}) => {
+    const ks = state.children || [];
+    if (!ks.length && !opt.always) return '';
+    const add = opt.add ? `<button type="button" class="chip-add small" id="f-addkid">${t('addKidShort')}</button>` : '';
+    return `<div class="field" id="f-kids-wrap">${t('forKids')}${ks.length ? `<div class="seg">${ks.map(k => `<label><input type="checkbox" name="f-kid" value="${k.id}" ${!sel || !sel.length || sel.includes(k.id) ? 'checked' : ''}><span>${esc(k.name)}</span></label>`).join('')}${add}</div>` : `<div class="kidsnone"><span class="helptext">${t('kidsNone')}</span>${add}</div>`}${opt.mixed ? `<p class="helptext">${t('kidsMixed')}</p>` : ''}</div>`;
+  };
+  // Kinder, die alle Zeiten einer Person gemeinsam haben (null = alle / gemischt)
+  const commonKids = p => {
+    if (!p || p.type === 'eltern' || !p.blocks.length) return null;
+    const k0 = kidsKey(p.blocks[0]);
+    return k0 && p.blocks.every(b => kidsKey(b) === k0) ? p.blocks[0].kids.slice() : null;
+  };
   // null = alle Kinder, false = keins gewählt
   function readKids(b) {
-    if (!b.querySelector('#f-kids-wrap')) return null;
+    if (!b.querySelector('#f-kids-wrap') || !b.querySelector('[name=f-kid]')) return null;
     const sel = [...b.querySelectorAll('[name=f-kid]:checked')].map(x => x.value);
     if (!sel.length) { toast(t('needKid')); return false; }
     return sel.length < state.children.length ? sel : null;
@@ -880,7 +905,7 @@ details[open] summary { margin-bottom: 8px; }
       <p class="helptext" id="f-help"></p>
       <div class="field">${t('whichDays')}<div class="seg">${t('days').map((d, i) => `<label><input type="checkbox" name="f-d" value="${i}" ${days.includes(i) ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></div>
       ${timeFields(s, e)}
-      ${kidsField(viewKid ? [viewKid] : null)}
+      ${kidsField(viewKid ? [viewKid] : commonKids(state.people.find(x => x.id === pid)))}
       ${hoField(false)}
       ${kitaFields()}
       <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn" id="f-cancel">${t('cancel')}</button><button type="button" class="btn primary" id="f-save">${t('enter')}</button></div>`,
@@ -890,6 +915,7 @@ details[open] summary { margin-bottom: 8px; }
           b.querySelector('#f-kita').hidden = p.type !== 'kita';
           b.querySelector('#f-howrap').hidden = p.type !== 'eltern';
           const kw = b.querySelector('#f-kids-wrap'); if (kw) kw.hidden = p.type === 'eltern';
+          if (kw && !viewKid) { const ck = commonKids(p); kw.querySelectorAll('[name=f-kid]').forEach(c => c.checked = !ck || ck.includes(c.value)); }
           b.querySelector('#f-help').textContent = t(p.type === 'eltern' ? 'addHelpEltern' : p.type === 'kita' ? 'addHelpKita' : 'addHelpCare', p.name);
         };
         b.querySelector('#f-p').onchange = sync; sync();
@@ -1146,7 +1172,7 @@ details[open] summary { margin-bottom: 8px; }
     const s = Math.min(m0, m1), en = Math.max(m0, m1);
     if (e.type === 'pointercancel') return;
     if (en - s < STEP) { addDlg({ pid: p.id, d, s, e: Math.min(END, s + 60) }); return; }
-    const nk = p.type !== 'eltern' && viewKid && multiKids() ? [viewKid] : null;
+    const nk = p.type === 'eltern' ? null : viewKid && multiKids() ? [viewKid] : commonKids(p);
     if (p.type === 'kita') p.blocks = p.blocks.filter(x => !overlaps(x, d, s, en) || !kidsMeet(x.kids, nk));
     const nb = { d, s, e: en, ...(nk ? { kids: nk } : {}) };
     if (p.type === 'kita') { const prev = p.blocks.find(x => x.bring || x.pick); nb.bring = prev?.bring || ''; nb.pick = prev?.pick || ''; }
