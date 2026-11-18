@@ -110,6 +110,10 @@ button { cursor: pointer; }
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 
 .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 10px; }
+.cal-head { align-items: flex-end; margin-top: 28px; margin-bottom: 12px; gap: 10px 16px; }
+.cal-head h2 { margin: 0; }
+.cal-head .hint { margin: 4px 0 0; }
+@media (max-width: 560px) { .cal-head > .btn { width: 100%; } }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { display: flex; align-items: stretch; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
 .chip.active { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
@@ -249,7 +253,6 @@ details[open] summary { margin-bottom: 8px; }
     <div class="topmain">
       <h1 data-i18n="title"></h1>
       <div class="actions">
-        <button type="button" class="btn" id="addBtn" data-i18n="addTimes"></button>
         <button type="button" class="btn" id="icsBtn" data-i18n="ics"></button>
         <button type="button" class="btn primary" id="shareBtn" data-i18n="share"></button>
       </div>
@@ -264,10 +267,17 @@ details[open] summary { margin-bottom: 8px; }
   <section>
     <div class="sec-head">
       <h2 data-i18n="whoCares"></h2>
-      <p class="hint" id="drawHint"></p>
     </div>
     <div class="chips" id="chips"></div>
   </section>
+
+  <div class="sec-head cal-head">
+    <div>
+      <h2 data-i18n="calTitle"></h2>
+      <p class="hint" id="drawHint"></p>
+    </div>
+    <button type="button" class="btn" id="addBtn" data-i18n="addTimes"></button>
+  </div>
 
   <section class="calendar">
     <div class="viewseg" id="kidview" role="group" hidden></div>
@@ -309,7 +319,7 @@ details[open] summary { margin-bottom: 8px; }
       addTimes: 'Zeiten eintragen',
       share: 'Plan teilen',
       whoCares: 'Wer betreut die Kinder?',
-      hintDefault: 'Oben jemanden auswählen, dann im Kalender eine Zeit ziehen. Oder „Zeiten eintragen“ nutzen.',
+      hintDefault: 'Oben jemanden auswählen und im Kalender eine Zeit ziehen – oder „Zeiten eintragen“ nutzen.',
       hintEltern: n => `Ziehe im Kalender, wann ${n} arbeitet.`,
       hintKita: n => `Ziehe im Kalender, wann die Kinder in ${n} sind.`,
       hintCare: n => `Ziehe im Kalender, wann ${n} betreut.`,
@@ -382,7 +392,7 @@ details[open] summary { margin-bottom: 8px; }
       kidHelp: 'Elternteile gelten für alle Kinder. Bei Einrichtungen und weiteren Personen wählst du beim Eintragen oder per Klick auf den Block, für welche Kinder sie gelten.',
       forKids: 'Für welche Kinder?', allKids: 'Alle Kinder', kidsNone: 'Noch keine Kinder angelegt – gilt für alle.', kidsMixed: 'Die Zeiten gelten gerade für unterschiedliche Kinder. Eine Änderung hier gilt für alle Zeiten.', addKidShort: '+ Kind', needKid: 'Bitte mindestens ein Kind wählen.',
       viewLabel: 'Ansicht',
-      ics: 'Kalender', icsTip: 'In Kalender exportieren (.ics)', icsTitle: 'In Kalender exportieren',
+      ics: 'Kalender-Export', calTitle: 'Wochenplan', icsTip: 'In Kalender exportieren (.ics)', icsTitle: 'In Kalender exportieren',
       icsSub: 'Lädt eine .ics-Datei, die du in Apple-, Google- oder Outlook-Kalender importieren kannst.',
       icsWho: 'Wessen Zeiten?', icsAll: 'Alle', icsWeek: 'Welche Woche?', wkThis: 'Diese Woche', wkNext: 'Nächste Woche', wkPick: 'Andere Woche',
       wkDate: 'Ein Tag in der gewünschten Woche', icsGo: '.ics herunterladen', icsNeedP: 'Bitte mindestens eine Person oder Einrichtung wählen.',
@@ -402,7 +412,7 @@ details[open] summary { margin-bottom: 8px; }
       addTimes: 'Add times',
       share: 'Share plan',
       whoCares: 'Who looks after the children?',
-      hintDefault: 'Pick someone above, then drag a time range in the calendar. Or use “Add times”.',
+      hintDefault: 'Pick someone above and drag a time range in the calendar – or use “Add times”.',
       hintEltern: n => `Drag in the calendar when ${n} works.`,
       hintKita: n => `Drag in the calendar when the children are at ${n}.`,
       hintCare: n => `Drag in the calendar when ${n} looks after the children.`,
@@ -475,7 +485,7 @@ details[open] summary { margin-bottom: 8px; }
       kidHelp: 'Parents count for all children. For kindergartens, schools and other people you choose which children they cover when adding them, or by clicking the block.',
       forKids: 'Which children?', allKids: 'All children', kidsNone: 'No children added yet – applies to all.', kidsMixed: 'These times currently cover different children. A change here applies to all times.', addKidShort: '+ Child', needKid: 'Please choose at least one child.',
       viewLabel: 'View',
-      ics: 'Calendar', icsTip: 'Export to calendar (.ics)', icsTitle: 'Export to calendar',
+      ics: 'Export to Calendar', calTitle: 'Weekly plan', icsTip: 'Export to calendar (.ics)', icsTitle: 'Export to calendar',
       icsSub: 'Downloads an .ics file you can import into Apple, Google or Outlook Calendar.',
       icsWho: 'Whose times?', icsAll: 'All', icsWeek: 'Which week?', wkThis: 'This week', wkNext: 'Next week', wkPick: 'Other week',
       wkDate: 'Any day in that week', icsGo: 'Download .ics', icsNeedP: 'Please choose at least one person or place.',
