@@ -198,6 +198,16 @@ dialog::backdrop { background: rgba(15, 22, 30, .45); }
 .seg span { display: block; padding: 7px 12px; border: 1px solid var(--line); border-radius: 9px; font-weight: 500; font-size: 14px; }
 .seg input:checked + span { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kinds label { position: relative; display: flex; }
+.kinds input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.kinds span { flex: 1; display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.kinds b { font-weight: 650; font-size: 15px; }
+.kinds small { font-size: 13px; color: var(--muted); line-height: 1.3; }
+.kinds input:checked + span { background: var(--accent); border-color: var(--accent); }
+.kinds input:checked + span, .kinds input:checked + span small { color: var(--accent-ink); }
+.kinds input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { .kinds { grid-template-columns: 1fr; } .kinds span { flex-direction: row; align-items: baseline; gap: 8px; flex-wrap: wrap; } }
 .colors { display: flex; gap: 8px; }
 .colors label { position: relative; }
 .colors input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
@@ -286,15 +296,18 @@ details[open] summary { margin-bottom: 8px; }
       title: 'Unsere Betreuungswoche',
       addTimes: 'Zeiten eintragen',
       share: 'Plan teilen',
-      whoCares: 'Wer betreut?',
-      hintDefault: 'Person auswählen, dann im Kalender eine Zeit ziehen. Oder „Zeiten eintragen“ nutzen.',
+      whoCares: 'Wer betreut die Kinder?',
+      hintDefault: 'Oben jemanden auswählen, dann im Kalender eine Zeit ziehen. Oder „Zeiten eintragen“ nutzen.',
       hintEltern: n => `Ziehe im Kalender, wann ${n} arbeitet.`,
-      hintKita: n => `Ziehe im Kalender die Öffnungszeit von ${n}.`,
+      hintKita: n => `Ziehe im Kalender, wann die Kinder in ${n} sind.`,
       hintCare: n => `Ziehe im Kalender, wann ${n} betreut.`,
-      lgWork: 'Elternteil arbeitet', lgHo: 'Homeoffice', lgCare: 'betreut / Kita offen', lgGap: 'Lücke: niemand da',
+      lgWork: 'Elternteil arbeitet', lgHo: 'Homeoffice', lgCare: 'Betreuung / Kita, Schule', lgGap: 'Lücke: niemand da',
       days: ['Mo', 'Di', 'Mi', 'Do', 'Fr'],
       daysL: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'],
-      types: { eltern: 'Elternteil', betreuung: 'Betreuung', kita: 'Kindergarten' },
+      types: { eltern: 'Elternteil', betreuung: 'Weitere Person', kita: 'Einrichtung' },
+      typeEx: { eltern: 'Arbeitet, ist sonst da', betreuung: 'Großeltern, Babysitter, Tagesmutter', kita: 'Kita, Schule, Hort' },
+      namePhs: { eltern: 'z. B. Mama, Papa', betreuung: 'z. B. Oma, Babysitter', kita: 'z. B. Kita Sonnenschein, Grundschule' },
+      kindQ: 'Wen oder was fügst du hinzu?', kindL: 'Art',
       kitaName: 'Kindergarten',
       wBringMissing: (d, t) => `${d} ${t}: Wer bringt? Noch kein Name eingetragen.`,
       wPickMissing: (d, t) => `${d} ${t}: Wer holt ab? Noch kein Name eingetragen.`,
@@ -312,7 +325,7 @@ details[open] summary { margin-bottom: 8px; }
       hoursOff: names => `Arbeitszeit unvollständig: ${names}`,
       hWork: h => `${h} h Arbeit`,
       editP: n => `${n} bearbeiten`,
-      addPerson: '+ Person hinzufügen',
+      addPerson: '+ Person oder Einrichtung',
       gapT: 'Lücke', coveredT: 'abgedeckt',
       whoBrings: 'wer bringt?', whoPicks: 'wer holt ab?',
       lblHo: ' (Homeoffice)', lblWork: ' (arbeitet)',
@@ -321,28 +334,28 @@ details[open] summary { margin-bottom: 8px; }
       moveStart: 'Beginn verschieben', moveEnd: 'Ende verschieben',
       gapLine: (s, e) => `${s}–${e} Uhr niemand da`,
       noGaps: 'Keine Lücken. Mo bis Fr ist von 7 bis 18 Uhr immer jemand da.',
-      addToSee: 'Füge Personen hinzu, um die Abdeckung zu sehen.',
+      addToSee: 'Füge Personen oder Einrichtungen hinzu, um die Abdeckung zu sehen.',
       warnsOk: 'Bringen und Abholen passt zu den eingetragenen Zeiten.',
       hoursLine: (ist, soll) => `${ist} von ${soll} h eingetragen`,
       hoPart: h => `, davon ${h} h Homeoffice`,
       missing: h => ` (es fehlen ${h} h)`, tooMuch: h => ` (${h} h zu viel)`,
       hoursEmpty: 'Bei Elternteilen kannst du die Wochenstunden angeben.',
       cGaps: 'Lücken', cBP: 'Bringen &amp; Abholen', cHours: 'Arbeitszeiten',
-      helpEltern: 'Trage ein, wann diese Person arbeitet. Außerhalb davon gilt sie als verfügbar.',
-      helpCare: 'Zum Beispiel Großeltern oder Babysitter. Trage ein, wann die Person das Kind betreut.',
-      helpKita: 'Trage die Betreuungszeiten ein und wer das Kind bringt und abholt.',
-      dlgAddPerson: 'Person hinzufügen', name: 'Name', namePh: 'z. B. Mama, Opa, Kita Sonnenschein', role: 'Rolle',
+      helpEltern: 'Du trägst die Arbeitszeit ein. Außerhalb davon gilt der Elternteil als verfügbar.',
+      helpCare: 'Du trägst ein, wann die Person die Kinder betreut.',
+      helpKita: 'Du trägst ein, wann die Kinder dort sind, und wer sie bringt und abholt.',
+      dlgAddPerson: 'Zum Plan hinzufügen', name: 'Name',
       hoursPerWeek: 'Arbeitsstunden pro Woche', hoursPh: 'z. B. 30', color: 'Farbe', colorN: i => `Farbe ${i}`,
       del: 'Löschen', cancel: 'Abbrechen', add: 'Hinzufügen', save: 'Speichern', reallyDel: 'Wirklich löschen?',
       needName: 'Bitte einen Namen eingeben.', added: n => `${n} hinzugefügt. Jetzt Zeiten eintragen.`,
       bringsName: 'Bringt (Name)', picksName: 'Holt ab (Name)', bringPh: 'z. B. Papa', pickPh: 'z. B. Oma',
       from: 'Von', to: 'Bis', ho: 'Homeoffice', badTime: '„Bis“ muss nach „Von“ liegen (zwischen 7 und 18 Uhr).',
-      forWhom: 'Für wen?', whichDays: 'An welchen Tagen?', enter: 'Eintragen',
+      forWhom: 'Person oder Einrichtung', whichDays: 'An welchen Tagen?', enter: 'Eintragen',
       addHelpEltern: n => `Arbeitszeit von ${n}.`,
-      addHelpKita: n => `Betreuungszeit im ${n}, mit Namen fürs Bringen und Abholen.`,
-      addHelpCare: n => `Wann ${n} das Kind betreut.`,
+      addHelpKita: n => `Wann die Kinder in ${n} sind, mit Namen fürs Bringen und Abholen.`,
+      addHelpCare: n => `Wann ${n} die Kinder betreut.`,
       needDay: 'Bitte mindestens einen Tag wählen.',
-      subWork: 'Arbeitszeit', subKita: 'Betreuungszeit', subCare: 'Betreut das Kind',
+      subWork: 'Arbeitszeit', subKita: 'Betreuungszeit', subCare: 'Betreut die Kinder',
       shareSub: 'Der ganze Plan steckt in diesem Link. Wer ihn öffnet, sieht genau diesen Stand. Nach Änderungen einfach neu teilen.',
       linkAria: 'Link zum Plan', copy: 'Kopieren', copied: 'Kopiert', copiedT: 'In die Zwischenablage kopiert.',
       selectedT: 'Text ist markiert. Jetzt kopieren (⌘C / Strg+C).',
@@ -352,9 +365,9 @@ details[open] summary { margin-bottom: 8px; }
       linkFail: 'Link konnte nicht erstellt werden.', adopted: 'Plan übernommen und gespeichert.',
       brokenLink: 'Der geteilte Link ist unvollständig oder beschädigt.',
       kids: 'Kinder', addKid: '+ Kind hinzufügen',
-      kidHint: 'Mehrere Kinder? Lege sie hier an. Für welches Kind eine Kita gilt, wählst du über den Stift an der Kita oder beim Eintragen der Zeiten.',
+      kidHint: 'Mehrere Kinder? Lege sie hier an. Für welches Kind eine Einrichtung gilt, wählst du über ihren Stift oder beim Eintragen der Zeiten.',
       dlgAddKid: 'Kind hinzufügen', kidNamePh: 'z. B. Anna',
-      kidHelp: 'Elternteile gelten für alle Kinder. Bei Kita- und Betreuungszeiten wählst du beim Eintragen oder per Klick auf den Block, für welche Kinder sie gelten.',
+      kidHelp: 'Elternteile gelten für alle Kinder. Bei Einrichtungen und weiteren Personen wählst du beim Eintragen oder per Klick auf den Block, für welche Kinder sie gelten.',
       forKids: 'Für welche Kinder?', allKids: 'Alle Kinder', kidsNone: 'Noch keine Kinder angelegt – gilt für alle.', kidsMixed: 'Die Zeiten gelten gerade für unterschiedliche Kinder. Eine Änderung hier gilt für alle Zeiten.', addKidShort: '+ Kind', needKid: 'Bitte mindestens ein Kind wählen.',
       viewLabel: 'Ansicht',
       gapLineKid: (s, e, k) => `${s}–${e} Uhr: niemand für ${k} da`
@@ -365,15 +378,18 @@ details[open] summary { margin-bottom: 8px; }
       title: 'Our Childcare Week',
       addTimes: 'Add times',
       share: 'Share plan',
-      whoCares: 'Who looks after the child?',
-      hintDefault: 'Pick a person, then drag a time range in the calendar. Or use “Add times”.',
+      whoCares: 'Who looks after the children?',
+      hintDefault: 'Pick someone above, then drag a time range in the calendar. Or use “Add times”.',
       hintEltern: n => `Drag in the calendar when ${n} works.`,
-      hintKita: n => `Drag the opening hours of ${n} in the calendar.`,
-      hintCare: n => `Drag in the calendar when ${n} looks after the child.`,
-      lgWork: 'Parent working', lgHo: 'Working from home', lgCare: 'Childcare / kindergarten open', lgGap: 'Gap: nobody available',
+      hintKita: n => `Drag in the calendar when the children are at ${n}.`,
+      hintCare: n => `Drag in the calendar when ${n} looks after the children.`,
+      lgWork: 'Parent working', lgHo: 'Working from home', lgCare: 'Care / kindergarten, school', lgGap: 'Gap: nobody available',
       days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
       daysL: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-      types: { eltern: 'Parent', betreuung: 'Caregiver', kita: 'Kindergarten' },
+      types: { eltern: 'Parent', betreuung: 'Other person', kita: 'Childcare or school' },
+      typeEx: { eltern: 'Works, otherwise available', betreuung: 'Grandparents, babysitter, nanny', kita: 'Kindergarten, school, after-school club' },
+      namePhs: { eltern: 'e.g. Mum, Dad', betreuung: 'e.g. Grandma, babysitter', kita: 'e.g. Sunshine Kindergarten, primary school' },
+      kindQ: 'Who or what are you adding?', kindL: 'Type',
       kitaName: 'Kindergarten',
       wBringMissing: (d, t) => `${d} ${t}: Who does drop-off? No name entered yet.`,
       wPickMissing: (d, t) => `${d} ${t}: Who does pick-up? No name entered yet.`,
@@ -391,7 +407,7 @@ details[open] summary { margin-bottom: 8px; }
       hoursOff: names => `Working hours incomplete: ${names}`,
       hWork: h => `${h} h work`,
       editP: n => `Edit ${n}`,
-      addPerson: '+ Add person',
+      addPerson: '+ Person or place',
       gapT: 'Gap', coveredT: 'covered',
       whoBrings: 'who drops off?', whoPicks: 'who picks up?',
       lblHo: ' (working from home)', lblWork: ' (working)',
@@ -400,28 +416,28 @@ details[open] summary { margin-bottom: 8px; }
       moveStart: 'Move start', moveEnd: 'Move end',
       gapLine: (s, e) => `${s}–${e} nobody available`,
       noGaps: 'No gaps. Someone is always available Mon–Fri from 7 am to 6 pm.',
-      addToSee: 'Add people to see the coverage.',
+      addToSee: 'Add people or places to see the coverage.',
       warnsOk: 'Drop-off and pick-up fit the entered times.',
       hoursLine: (ist, soll) => `${ist} of ${soll} h entered`,
       hoPart: h => `, of which ${h} h from home`,
       missing: h => ` (${h} h missing)`, tooMuch: h => ` (${h} h too many)`,
       hoursEmpty: 'You can enter weekly hours for parents.',
       cGaps: 'Gaps', cBP: 'Drop-off &amp; pick-up', cHours: 'Working hours',
-      helpEltern: 'Enter when this person works. Outside of that they count as available.',
-      helpCare: 'For example grandparents or a babysitter. Enter when this person looks after the child.',
-      helpKita: 'Enter the opening hours and who drops off and picks up the child.',
-      dlgAddPerson: 'Add person', name: 'Name', namePh: 'e.g. Mum, Grandpa, Sunshine Kindergarten', role: 'Role',
+      helpEltern: 'You enter their working hours. Outside of those, the parent counts as available.',
+      helpCare: 'You enter when this person looks after the children.',
+      helpKita: 'You enter when the children are there, and who drops them off and picks them up.',
+      dlgAddPerson: 'Add to the plan', name: 'Name',
       hoursPerWeek: 'Working hours per week', hoursPh: 'e.g. 30', color: 'Colour', colorN: i => `Colour ${i}`,
       del: 'Delete', cancel: 'Cancel', add: 'Add', save: 'Save', reallyDel: 'Really delete?',
       needName: 'Please enter a name.', added: n => `${n} added. Now add their times.`,
       bringsName: 'Drop-off (name)', picksName: 'Pick-up (name)', bringPh: 'e.g. Dad', pickPh: 'e.g. Grandma',
       from: 'From', to: 'To', ho: 'Working from home', badTime: '“To” must be after “From” (between 7:00 and 18:00).',
-      forWhom: 'For whom?', whichDays: 'Which days?', enter: 'Add',
+      forWhom: 'Person or place', whichDays: 'Which days?', enter: 'Add',
       addHelpEltern: n => `Working hours of ${n}.`,
-      addHelpKita: n => `Opening hours of ${n}, with names for drop-off and pick-up.`,
-      addHelpCare: n => `When ${n} looks after the child.`,
+      addHelpKita: n => `When the children are at ${n}, with names for drop-off and pick-up.`,
+      addHelpCare: n => `When ${n} looks after the children.`,
       needDay: 'Please choose at least one day.',
-      subWork: 'Working hours', subKita: 'Opening hours', subCare: 'Looks after the child',
+      subWork: 'Working hours', subKita: 'Care hours', subCare: 'Looks after the children',
       shareSub: 'The whole plan is contained in this link. Whoever opens it sees exactly this version. Share again after changes.',
       linkAria: 'Link to the plan', copy: 'Copy', copied: 'Copied', copiedT: 'Copied to clipboard.',
       selectedT: 'Text is selected. Copy it now (⌘C / Ctrl+C).',
@@ -431,9 +447,9 @@ details[open] summary { margin-bottom: 8px; }
       linkFail: 'Could not create the link.', adopted: 'Plan saved as yours.',
       brokenLink: 'The shared link is incomplete or damaged.',
       kids: 'Children', addKid: '+ Add child',
-      kidHint: 'More than one child? Add them here. Choose which child a kindergarten is for via its pencil icon, or when adding times.',
+      kidHint: 'More than one child? Add them here. Choose which child a kindergarten or school is for via its pencil icon, or when adding times.',
       dlgAddKid: 'Add child', kidNamePh: 'e.g. Anna',
-      kidHelp: 'Parents count for all children. For kindergarten and caregiver times you choose which children they cover when adding them, or by clicking the block.',
+      kidHelp: 'Parents count for all children. For kindergartens, schools and other people you choose which children they cover when adding them, or by clicking the block.',
       forKids: 'Which children?', allKids: 'All children', kidsNone: 'No children added yet – applies to all.', kidsMixed: 'These times currently cover different children. A change here applies to all times.', addKidShort: '+ Child', needKid: 'Please choose at least one child.',
       viewLabel: 'View',
       gapLineKid: (s, e, k) => `${s}–${e}: nobody for ${k}`
@@ -783,9 +799,9 @@ details[open] summary { margin-bottom: 8px; }
     const help = { eltern: t('helpEltern'), betreuung: t('helpCare'), kita: t('helpKita') };
     openDlg(`
       <h3>${isNew ? t('dlgAddPerson') : esc(t('editP', p.name))}</h3>
-      <label class="field">${t('name')}<input id="f-name" value="${esc(p.name)}" placeholder="${esc(t('namePh'))}" autocomplete="off"></label>
-      <div class="field">${t('role')}<div class="seg">${Object.entries(t('types')).map(([k, v]) => `<label><input type="radio" name="f-type" value="${k}" ${p.type === k ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div></div>
+      <div class="field">${isNew ? t('kindQ') : t('kindL')}<div class="kinds">${Object.entries(t('types')).map(([k, v]) => `<label><input type="radio" name="f-type" value="${k}" ${p.type === k ? 'checked' : ''}><span><b>${v}</b><small>${t('typeEx')[k]}</small></span></label>`).join('')}</div></div>
       <p class="helptext" id="f-help"></p>
+      <label class="field">${t('name')}<input id="f-name" value="${esc(p.name)}" autocomplete="off"></label>
       ${isNew ? '' : kidsField(p.blocks.some(x => !x.kids) ? null : [...new Set(p.blocks.flatMap(x => x.kids))], { always: true, add: true, mixed: new Set(p.blocks.map(kidsKey)).size > 1 })}
       <label class="field" id="f-hours-wrap">${t('hoursPerWeek')}<input id="f-hours" type="number" min="0" max="60" step="0.5" value="${p.hours || ''}" placeholder="${esc(t('hoursPh'))}"></label>
       <div class="field">${t('color')}<div class="colors">${[0, 1, 2, 3, 4, 5].map(c => `<label style="--c:var(--p${c})"><input type="radio" name="f-color" value="${c}" ${p.color === c ? 'checked' : ''} aria-label="${t('colorN', c + 1)}"><span></span></label>`).join('')}</div></div>
@@ -795,6 +811,7 @@ details[open] summary { margin-bottom: 8px; }
         const sync = () => {
           const ty = b.querySelector('[name=f-type]:checked').value;
           b.querySelector('#f-help').textContent = help[ty];
+          b.querySelector('#f-name').placeholder = t('namePhs')[ty];
           b.querySelector('#f-hours-wrap').hidden = ty !== 'eltern';
           const kw = b.querySelector('#f-kids-wrap'); if (kw) kw.hidden = ty === 'eltern';
         };
